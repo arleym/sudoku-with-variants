@@ -1,0 +1,129 @@
+:root {
+  /* Colors */
+  --primary-color: #4a90d9;
+  --primary-hover: #3a7bc8;
+  --danger-color: #dc3545;
+  --danger-hover: #c82333;
+
+  /* Text */
+  --text-color: #333;
+  --text-muted: #666;
+  --given-color: #1a1a1a;
+
+  /* Backgrounds */
+  --bg-color: #f5f5f5;
+  --card-bg: #fff;
+  --modal-bg: #fff;
+
+  /* Grid */
+  --grid-bg: #fff;
+  --grid-border: #333;
+  --box-border: #333;
+  --cell-bg: #fff;
+  --cell-border: #ccc;
+  --cell-hover-bg: #f0f0f0;
+  --cell-selected-bg: #bbdefb;
+  --cell-highlighted-bg: #fff9c4;
+  --cell-related-bg: #e3f2fd;
+  --cell-error-bg: #ffcdd2;
+
+  /* Pencil marks */
+  --pencil-color: #666;
+
+  /* UI */
+  --button-bg: #f5f5f5;
+  --button-hover-bg: #e0e0e0;
+  --button-border: #ccc;
+  --button-color: #333;
+  --button-active-bg: #4a90d9;
+  --button-active-color: #fff;
+  --button-active-border: #3a7bc8;
+
+  /* Forms */
+  --input-bg: #f9f9f9;
+  --input-border: #ddd;
+  --border-color: #e0e0e0;
+
+  /* Other */
+  --focus-color: #4a90d9;
+  --hint-bg: #fff9c4;
+  --hint-border: #fbc02d;
+  --toggle-off-bg: #ccc;
+  --toggle-on-bg: #4a90d9;
+}
+
+/* Dark mode (optional - can be enabled later) */
+@media (prefers-color-scheme: dark) {
+  :root.dark-mode {
+    --text-color: #e0e0e0;
+    --text-muted: #999;
+    --given-color: #fff;
+    --bg-color: #1a1a1a;
+    --card-bg: #2a2a2a;
+    --modal-bg: #2a2a2a;
+    --grid-bg: #2a2a2a;
+    --grid-border: #555;
+    --box-border: #555;
+    --cell-bg: #333;
+    --cell-border: #444;
+    --cell-hover-bg: #3a3a3a;
+    --cell-selected-bg: #1e3a5f;
+    --cell-highlighted-bg: #5c4b00;
+    --cell-related-bg: #1e3040;
+    --cell-error-bg: #5c1a1a;
+    --pencil-color: #999;
+    --button-bg: #3a3a3a;
+    --button-hover-bg: #4a4a4a;
+    --button-border: #555;
+    --button-color: #e0e0e0;
+    --input-bg: #333;
+    --input-border: #444;
+    --border-color: #444;
+    --toggle-off-bg: #555;
+  }
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Prevent text selection on double-click */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

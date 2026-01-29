@@ -1,0 +1,98 @@
+.numberPad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.controlButton {
+  flex: 1;
+  max-width: 120px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--button-border, #ccc);
+  border-radius: 8px;
+  background: var(--button-bg, #f5f5f5);
+  color: var(--button-color, #333);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 48px;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: var(--button-hover-bg, #e0e0e0);
+}
+
+.controlButton.active {
+  background: var(--button-active-bg, #4a90d9);
+  color: var(--button-active-color, #fff);
+  border-color: var(--button-active-border, #3a7bc8);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.numbers {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.numberButton {
+  aspect-ratio: 1;
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border: 2px solid var(--number-border, #ccc);
+  border-radius: 8px;
+  background: var(--number-bg, #fff);
+  color: var(--number-color, #333);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.numberButton:hover:not(:disabled) {
+  background: var(--number-hover-bg, #e3f2fd);
+  border-color: var(--number-hover-border, #4a90d9);
+}
+
+.numberButton:active:not(:disabled) {
+  background: var(--number-active-bg, #bbdefb);
+  transform: scale(0.95);
+}
+
+.numberButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hide on desktop (keyboard input preferred) */
+@media (min-width: 769px) and (hover: hover) {
+  .numberPad {
+    display: none;
+  }
+}
+
+/* Show on touch devices */
+@media (hover: none) {
+  .numberPad {
+    display: flex;
+  }
+}
+
+/* Always show on small screens */
+@media (max-width: 768px) {
+  .numberPad {
+    display: flex;
+  }
+}

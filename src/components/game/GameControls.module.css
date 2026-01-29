@@ -1,0 +1,26 @@
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.row > * {
+  flex: 1;
+  min-width: 80px;
+  max-width: 120px;
+}
+
+@media (max-width: 400px) {
+  .row > * {
+    min-width: 70px;
+    font-size: 0.875rem;
+  }
+}

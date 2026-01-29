@@ -1,0 +1,73 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  padding: 1rem;
+  background: var(--card-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color, #333);
+}
+
+.puzzleInfo {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-muted, #666);
+  text-transform: capitalize;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 1.125rem;
+  color: var(--text-muted, #666);
+}
+
+.generating {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted, #666);
+}
+
+.completeContent {
+  text-align: center;
+}
+
+.completeContent p {
+  margin: 0 0 1.5rem;
+  font-size: 1.125rem;
+}
+
+.completeActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 0.75rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}

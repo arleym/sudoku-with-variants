@@ -1,0 +1,29 @@
+.panel {
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.hintDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--hint-bg, #fff9c4);
+  border: 2px solid var(--hint-border, #fbc02d);
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+.hintText {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-color, #333);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
