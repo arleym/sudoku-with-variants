@@ -22,7 +22,7 @@ export function NumberPad({
   const values = Array.from({ length: size }, (_, i) => i + 1);
 
   // Determine grid layout based on size
-  const cols = size === 4 ? 4 : size === 9 ? 5 : 6;
+  const cols = size === 4 ? 4 : size === 9 ? 5 : size === 16 ? 6 : 7;
 
   return (
     <div className={styles.numberPad}>

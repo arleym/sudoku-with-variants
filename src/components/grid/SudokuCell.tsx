@@ -15,6 +15,8 @@ interface SudokuCellProps {
   isRelated: boolean;
   hasError: boolean;
   showPencilMarks: boolean;
+  isSectionComplete: boolean;
+  completedNumbers: Set<number>;
   onClick: () => void;
 }
 
@@ -29,6 +31,8 @@ export const SudokuCell = memo(function SudokuCell({
   isRelated,
   hasError,
   showPencilMarks,
+  isSectionComplete,
+  completedNumbers,
   onClick,
 }: SudokuCellProps) {
   const displayedValue = givenValue ?? value;
@@ -41,6 +45,7 @@ export const SudokuCell = memo(function SudokuCell({
     isRelated && !isSelected && styles.related,
     hasError && styles.error,
     isGiven && styles.given,
+    isSectionComplete && styles.sectionComplete,
   ]
     .filter(Boolean)
     .join(' ');
@@ -58,9 +63,11 @@ export const SudokuCell = memo(function SudokuCell({
       }`}
     >
       {displayedValue !== null ? (
-        <span className={styles.value}>{displayValue(displayedValue, size)}</span>
+        <span className={`${styles.value} ${completedNumbers.has(displayedValue) ? styles.valueCompleted : ''}`}>
+          {displayValue(displayedValue, size)}
+        </span>
       ) : showPencilMarks && pencilMarks.size > 0 ? (
-        <PencilMarks marks={pencilMarks} size={size} />
+        <PencilMarks marks={pencilMarks} size={size} completedNumbers={completedNumbers} />
       ) : null}
     </div>
   );

@@ -1,9 +1,9 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import type { GridSize } from '../../types/puzzle';
 import type { GameSettings } from '../../types/settings';
 import { getGridConfig, getCellPosition } from '../../constants/grid-configs';
-import { getConflicts, getRelatedIndices } from '../../lib/puzzle/validator';
-import { mergeCellValues, getCandidates } from '../../lib/candidates';
+import { getConflicts, getRelatedIndices, isRowComplete, isColComplete, isBoxComplete } from '../../lib/puzzle/validator';
+import { mergeCellValues, getCandidates, getCompletedNumbers } from '../../lib/candidates';
 import { SudokuCell } from './SudokuCell';
 import styles from './SudokuGrid.module.css';
 
@@ -88,6 +88,97 @@ export function SudokuGrid({
     });
   }, [allValues, size, settings.autoFillCandidates, pencilMarks]);
 
+  // Clean pencil marks by removing impossible candidates
+  const cleanedPencilMarks = useMemo(() => {
+    if (!settings.autoCleanPencilMarks || settings.autoFillCandidates) {
+      return autoCandidates;
+    }
+    return pencilMarks.map((marks, index) => {
+      if (allValues[index] !== null || marks.size === 0) return new Set<number>();
+      const validCandidates = getCandidates(allValues, index, size);
+      return new Set([...marks].filter(m => validCandidates.has(m)));
+    });
+  }, [pencilMarks, allValues, size, settings.autoCleanPencilMarks, settings.autoFillCandidates, autoCandidates]);
+
+  // Calculate completed numbers (all N instances placed)
+  const completedNumbers = useMemo(() => {
+    return getCompletedNumbers(allValues, size);
+  }, [allValues, size]);
+
+  // Track previously completed sections to detect new completions
+  const prevCompletedRef = useRef<{ rows: Set<number>; cols: Set<number>; boxes: Set<number> }>({
+    rows: new Set(),
+    cols: new Set(),
+    boxes: new Set(),
+  });
+
+  // Calculate completed sections (rows, cols, boxes)
+  const completedSections = useMemo(() => {
+    const sections = {
+      rows: new Set<number>(),
+      cols: new Set<number>(),
+      boxes: new Set<number>(),
+    };
+
+    for (let i = 0; i < size; i++) {
+      if (isRowComplete(allValues, i, size)) sections.rows.add(i);
+      if (isColComplete(allValues, i, size)) sections.cols.add(i);
+      if (isBoxComplete(allValues, i, size)) sections.boxes.add(i);
+    }
+
+    return sections;
+  }, [allValues, size]);
+
+  // Track newly completed sections for animation
+  const newlyCompletedCells = useMemo(() => {
+    const cells = new Set<number>();
+    const prev = prevCompletedRef.current;
+
+    // Find newly completed rows
+    for (const row of completedSections.rows) {
+      if (!prev.rows.has(row)) {
+        for (let col = 0; col < size; col++) {
+          cells.add(row * size + col);
+        }
+      }
+    }
+
+    // Find newly completed cols
+    for (const col of completedSections.cols) {
+      if (!prev.cols.has(col)) {
+        for (let row = 0; row < size; row++) {
+          cells.add(row * size + col);
+        }
+      }
+    }
+
+    // Find newly completed boxes
+    const { boxConfig } = config;
+    const boxesPerRow = size / boxConfig.cols;
+    for (const box of completedSections.boxes) {
+      if (!prev.boxes.has(box)) {
+        const boxRow = Math.floor(box / boxesPerRow) * boxConfig.rows;
+        const boxCol = (box % boxesPerRow) * boxConfig.cols;
+        for (let r = boxRow; r < boxRow + boxConfig.rows; r++) {
+          for (let c = boxCol; c < boxCol + boxConfig.cols; c++) {
+            cells.add(r * size + c);
+          }
+        }
+      }
+    }
+
+    return cells;
+  }, [completedSections, size, config]);
+
+  // Update previous completed sections after render
+  useEffect(() => {
+    prevCompletedRef.current = {
+      rows: new Set(completedSections.rows),
+      cols: new Set(completedSections.cols),
+      boxes: new Set(completedSections.boxes),
+    };
+  }, [completedSections]);
+
   const handleCellClick = useCallback(
     (index: number) => {
       onCellClick(index);
@@ -132,7 +223,7 @@ export function SudokuGrid({
                 value={userValues[index]}
                 givenValue={puzzleCells[index]}
                 pencilMarks={
-                  settings.showPencilMarks ? autoCandidates[index] : new Set()
+                  settings.showPencilMarks ? cleanedPencilMarks[index] : new Set()
                 }
                 size={size}
                 isSelected={selectedCell === index}
@@ -142,6 +233,8 @@ export function SudokuGrid({
                 showPencilMarks={
                   settings.showPencilMarks || settings.autoFillCandidates
                 }
+                isSectionComplete={newlyCompletedCells.has(index)}
+                completedNumbers={completedNumbers}
                 onClick={() => handleCellClick(index)}
               />
             </div>

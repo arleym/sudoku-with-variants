@@ -156,3 +156,57 @@ export function getRelatedIndices(index: number, size: GridSize): Set<number> {
   related.delete(index);
   return related;
 }
+
+export function isRowComplete(
+  cells: (number | null)[],
+  row: number,
+  size: GridSize
+): boolean {
+  const indices = getRowIndices(row, size);
+  const values = new Set<number>();
+
+  for (const i of indices) {
+    const value = cells[i];
+    if (value === null) return false;
+    if (values.has(value)) return false; // Duplicate
+    values.add(value);
+  }
+
+  return values.size === size;
+}
+
+export function isColComplete(
+  cells: (number | null)[],
+  col: number,
+  size: GridSize
+): boolean {
+  const indices = getColIndices(col, size);
+  const values = new Set<number>();
+
+  for (const i of indices) {
+    const value = cells[i];
+    if (value === null) return false;
+    if (values.has(value)) return false;
+    values.add(value);
+  }
+
+  return values.size === size;
+}
+
+export function isBoxComplete(
+  cells: (number | null)[],
+  boxIndex: number,
+  size: GridSize
+): boolean {
+  const indices = getBoxIndices(boxIndex, size);
+  const values = new Set<number>();
+
+  for (const i of indices) {
+    const value = cells[i];
+    if (value === null) return false;
+    if (values.has(value)) return false;
+    values.add(value);
+  }
+
+  return values.size === size;
+}

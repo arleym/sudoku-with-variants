@@ -95,7 +95,7 @@ export function decodePuzzleFromUrl(urlString?: string): Puzzle | null {
     }
 
     // Validate size
-    if (![4, 9, 16].includes(data.s)) {
+    if (![4, 9, 16, 25].includes(data.s)) {
       console.warn('Invalid puzzle size:', data.s);
       return null;
     }

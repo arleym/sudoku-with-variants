@@ -37,6 +37,18 @@ export const GRID_CONFIGS: Record<GridSize, GridConfig> = {
       expert: { min: 60, max: 80 },
     },
   },
+  25: {
+    size: 25,
+    boxConfig: { rows: 5, cols: 5 },
+    maxValue: 25,
+    values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'],
+    clueTargets: {
+      easy: { min: 380, max: 450 },
+      medium: { min: 300, max: 380 },
+      hard: { min: 220, max: 300 },
+      expert: { min: 150, max: 220 },
+    },
+  },
 };
 
 export function getGridConfig(size: GridSize): GridConfig {
@@ -59,7 +71,7 @@ export function getCellPosition(index: number, size: GridSize) {
 
 export function displayValue(value: number | null, size: GridSize): string {
   if (value === null) return '';
-  if (size === 16 && value > 9) {
+  if (size > 9 && value > 9) {
     return String.fromCharCode('A'.charCodeAt(0) + value - 10);
   }
   return String(value);
@@ -68,13 +80,17 @@ export function displayValue(value: number | null, size: GridSize): string {
 export function parseInputValue(input: string, size: GridSize): number | null {
   const upper = input.toUpperCase();
 
-  // Handle letter input for 16x16
-  if (size === 16 && upper >= 'A' && upper <= 'G') {
-    return upper.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+  // Handle letter input for sizes > 9 (A-P for values 10-25)
+  if (size > 9 && upper.length === 1 && upper >= 'A') {
+    const value = upper.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+    if (value >= 10 && value <= size) {
+      return value;
+    }
+    return null;
   }
 
   const num = parseInt(input, 10);
-  if (isNaN(num) || num < 1 || num > size) {
+  if (isNaN(num) || num < 1 || num > Math.min(size, 9)) {
     return null;
   }
   return num;

@@ -8,6 +8,7 @@
   user-select: none;
   transition: background-color 0.15s ease;
   aspect-ratio: 1;
+  height: 100%;
   font-size: var(--cell-font-size, 1.5rem);
   position: relative;
 }
@@ -43,8 +44,28 @@
   color: var(--given-color, #333);
 }
 
+.sectionComplete {
+  animation: completePulse 0.8s ease-out;
+}
+
+@keyframes completePulse {
+  0% {
+    background: var(--cell-bg, #fff);
+  }
+  30% {
+    background: var(--complete-highlight, #a5d6a7);
+  }
+  100% {
+    background: var(--cell-bg, #fff);
+  }
+}
+
 .value {
   line-height: 1;
+}
+
+.valueCompleted {
+  color: var(--value-completed-color, #888);
 }
 
 /* Different sizes need different font scaling */
@@ -58,4 +79,8 @@
 
 [data-size="16"] .cell {
   font-size: calc(var(--grid-size) / 20);
+}
+
+[data-size="25"] .cell {
+  font-size: calc(var(--grid-size) / 30);
 }

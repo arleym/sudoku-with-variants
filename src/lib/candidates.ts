@@ -63,3 +63,25 @@ export function mergeCellValues(
 ): (number | null)[] {
   return puzzle.map((cell, index) => cell ?? userValues[index]);
 }
+
+export function getCompletedNumbers(
+  cells: (number | null)[],
+  size: GridSize
+): Set<number> {
+  const counts = new Map<number, number>();
+
+  for (const value of cells) {
+    if (value !== null) {
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+  }
+
+  const completed = new Set<number>();
+  for (let v = 1; v <= size; v++) {
+    if (counts.get(v) === size) {
+      completed.add(v);
+    }
+  }
+
+  return completed;
+}

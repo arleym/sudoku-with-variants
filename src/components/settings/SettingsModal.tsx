@@ -26,6 +26,11 @@ const SETTINGS_CONFIG: {
     description: 'Automatically show all valid candidates',
   },
   {
+    key: 'autoCleanPencilMarks',
+    label: 'Auto-clean Pencil Marks',
+    description: 'Remove impossible candidates from pencil marks',
+  },
+  {
     key: 'showErrors',
     label: 'Show Errors',
     description: 'Highlight conflicting numbers',

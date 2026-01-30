@@ -13,6 +13,7 @@ const SIZES: { value: GridSize; label: string }[] = [
   { value: 4, label: '4×4' },
   { value: 9, label: '9×9' },
   { value: 16, label: '16×16' },
+  { value: 25, label: '25×25' },
 ];
 
 const DIFFICULTIES: { value: Difficulty; label: string }[] = [

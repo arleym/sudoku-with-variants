@@ -1,4 +1,4 @@
-export type GridSize = 4 | 9 | 16;
+export type GridSize = 4 | 9 | 16 | 25;
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
 export interface Puzzle {

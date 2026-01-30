@@ -139,7 +139,7 @@ function App() {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Sudoku</h1>
+        <h1 className={styles.title}>Morrison Sudoku</h1>
         <div className={styles.puzzleInfo}>
           {state.puzzle.size}×{state.puzzle.size} • {state.puzzle.difficulty}
         </div>
