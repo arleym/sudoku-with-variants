@@ -85,3 +85,40 @@
 [data-size="25"] .cell {
   font-size: calc(var(--grid-size) / 30);
 }
+
+@media print {
+  .cell {
+    border: 1px solid #000 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cell:focus {
+    outline: none;
+  }
+
+  .selected,
+  .highlighted,
+  .related,
+  .error {
+    background: #fff !important;
+  }
+
+  .given {
+    font-weight: bold;
+    color: #000;
+  }
+
+  .value {
+    color: #333;
+  }
+
+  .valueCompleted {
+    color: #333;
+  }
+
+  .sectionComplete {
+    animation: none;
+  }
+}

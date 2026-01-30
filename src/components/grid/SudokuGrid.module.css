@@ -49,3 +49,24 @@
     --grid-size: min(85vw, 85vh - 150px, 500px);
   }
 }
+
+@media print {
+  .gridContainer {
+    padding: 0;
+  }
+
+  .grid {
+    --grid-size: min(6in, 100vw - 1in);
+    border: 2px solid #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .boxBorderRight {
+    border-right: 2px solid #000 !important;
+  }
+
+  .boxBorderBottom {
+    border-bottom: 2px solid #000 !important;
+  }
+}

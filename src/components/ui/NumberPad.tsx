@@ -31,7 +31,7 @@ export function NumberPad({
           className={`${styles.controlButton} ${isPencilMode ? styles.active : ''}`}
           onClick={onTogglePencilMode}
           aria-pressed={isPencilMode}
-          title="Toggle pencil mode (P)"
+          title="Toggle pencil mode"
         >
           Pencil
         </button>

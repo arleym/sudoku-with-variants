@@ -47,13 +47,6 @@ export function useKeyboardInput({
       return;
     }
 
-    // Toggle pencil mode with 'p'
-    if (e.key === 'p' || e.key === 'P') {
-      e.preventDefault();
-      onTogglePencilMode();
-      return;
-    }
-
     // No cell selected - nothing else to handle
     if (selectedCell === null) return;
 

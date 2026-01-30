@@ -96,3 +96,27 @@
     display: flex;
   }
 }
+
+@media print {
+  .numberPad {
+    display: flex !important;
+    padding: 0.5rem 0;
+    max-width: none;
+  }
+
+  .controls {
+    display: none;
+  }
+
+  .numbers {
+    gap: 0.25rem;
+  }
+
+  .numberButton {
+    min-width: 24px;
+    min-height: 24px;
+    font-size: 0.875rem;
+    border-width: 1px;
+    padding: 0.25rem;
+  }
+}

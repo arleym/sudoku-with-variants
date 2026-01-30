@@ -24,3 +24,9 @@
     font-size: 0.875rem;
   }
 }
+
+@media print {
+  .controls {
+    display: none;
+  }
+}

@@ -71,3 +71,17 @@
     font-size: 1.5rem;
   }
 }
+
+@media print {
+  .app {
+    min-height: auto;
+  }
+
+  .header {
+    display: none;
+  }
+
+  .main {
+    padding-bottom: 0;
+  }
+}
