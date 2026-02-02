@@ -138,13 +138,6 @@ function App() {
 
   return (
     <div className={styles.app}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Morrison Sudoku</h1>
-        <div className={styles.puzzleInfo}>
-          {state.puzzle.size}×{state.puzzle.size} • {state.puzzle.difficulty}
-        </div>
-      </header>
-
       <main className={styles.main}>
         <SudokuGrid
           size={state.puzzle.size}
@@ -166,6 +159,7 @@ function App() {
             state.selectedCell === null ||
             state.puzzle.cells[state.selectedCell] !== null
           }
+          showPencilButton={settings.showPencilMarks || settings.autoFillCandidates}
         />
 
         {settings.showHints && (

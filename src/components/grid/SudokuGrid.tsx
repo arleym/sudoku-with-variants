@@ -78,13 +78,20 @@ export function SudokuGrid({
   }, [selectedCell, allValues, settings.highlightSameNumbers, totalCells]);
 
   // Calculate auto-fill candidates if enabled
+  // When auto-fill is on, pencilMarks act as "exclusions" - user can remove candidates
   const autoCandidates = useMemo(() => {
     if (!settings.autoFillCandidates) {
       return pencilMarks;
     }
     return allValues.map((_, index) => {
       if (allValues[index] !== null) return new Set<number>();
-      return getCandidates(allValues, index, size);
+      const computed = getCandidates(allValues, index, size);
+      // Remove any candidates that the user has excluded via pencil marks
+      const userExclusions = pencilMarks[index];
+      if (userExclusions.size > 0) {
+        return new Set([...computed].filter(c => !userExclusions.has(c)));
+      }
+      return computed;
     });
   }, [allValues, size, settings.autoFillCandidates, pencilMarks]);
 

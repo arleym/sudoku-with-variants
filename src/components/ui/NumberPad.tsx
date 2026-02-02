@@ -9,6 +9,7 @@ interface NumberPadProps {
   onClear: () => void;
   onTogglePencilMode: () => void;
   disabled: boolean;
+  showPencilButton?: boolean;
 }
 
 export function NumberPad({
@@ -18,6 +19,7 @@ export function NumberPad({
   onClear,
   onTogglePencilMode,
   disabled,
+  showPencilButton = true,
 }: NumberPadProps) {
   const values = Array.from({ length: size }, (_, i) => i + 1);
 
@@ -27,14 +29,16 @@ export function NumberPad({
   return (
     <div className={styles.numberPad}>
       <div className={styles.controls}>
-        <button
-          className={`${styles.controlButton} ${isPencilMode ? styles.active : ''}`}
-          onClick={onTogglePencilMode}
-          aria-pressed={isPencilMode}
-          title="Toggle pencil mode"
-        >
-          Pencil
-        </button>
+        {showPencilButton && (
+          <button
+            className={`${styles.controlButton} ${isPencilMode ? styles.active : ''}`}
+            onClick={onTogglePencilMode}
+            aria-pressed={isPencilMode}
+            title="Toggle pencil mode"
+          >
+            Pencil
+          </button>
+        )}
         <button
           className={styles.controlButton}
           onClick={onClear}
