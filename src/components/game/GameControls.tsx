@@ -8,8 +8,13 @@ interface GameControlsProps {
   onNewGame: () => void;
   onShare: () => void;
   onSettings: () => void;
+  onClear: () => void;
+  onTogglePencilMode: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  isPencilMode: boolean;
+  isPencilEnabled: boolean;
+  isClearDisabled: boolean;
 }
 
 export function GameControls({
@@ -19,32 +24,80 @@ export function GameControls({
   onNewGame,
   onShare,
   onSettings,
+  onClear,
+  onTogglePencilMode,
   canUndo,
   canRedo,
+  isPencilMode,
+  isPencilEnabled,
+  isClearDisabled,
 }: GameControlsProps) {
   return (
     <div className={styles.controls}>
       <div className={styles.row}>
-        <Button onClick={onUndo} disabled={!canUndo} size="small" title="Undo (Ctrl+Z)">
-          Undo
-        </Button>
-        <Button onClick={onRedo} disabled={!canRedo} size="small" title="Redo (Ctrl+Y)">
-          Redo
-        </Button>
+        <div className={styles.halfButtons}>
+          <button
+            className={styles.iconButton}
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+            aria-label="Undo"
+          >
+            &#x21A9;
+          </button>
+          <button
+            className={styles.iconButton}
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+            aria-label="Redo"
+          >
+            &#x21AA;
+          </button>
+        </div>
         <Button onClick={onReset} size="small" variant="danger" title="Reset puzzle">
           Reset
         </Button>
-      </div>
-      <div className={styles.row}>
         <Button onClick={onNewGame} size="small" variant="primary">
           New Game
         </Button>
-        <Button onClick={onShare} size="small">
-          Share
-        </Button>
-        <Button onClick={onSettings} size="small">
-          Settings
-        </Button>
+        <div className={styles.halfButtons}>
+          <button
+            className={styles.iconButton}
+            onClick={onShare}
+            title="Share puzzle"
+            aria-label="Share"
+          >
+            &#x1F517;
+          </button>
+          <button
+            className={styles.iconButton}
+            onClick={onSettings}
+            title="Settings"
+            aria-label="Settings"
+          >
+            &#x2699;
+          </button>
+        </div>
+      </div>
+      <div className={styles.row}>
+        <button
+          className={`${styles.controlButton} ${isPencilMode ? styles.active : ''}`}
+          onClick={onTogglePencilMode}
+          disabled={!isPencilEnabled}
+          aria-pressed={isPencilMode}
+          title="Toggle pencil mode"
+        >
+          Pencil
+        </button>
+        <button
+          className={styles.controlButton}
+          onClick={onClear}
+          disabled={isClearDisabled}
+          title="Clear cell (Delete)"
+        >
+          Clear
+        </button>
       </div>
     </div>
   );

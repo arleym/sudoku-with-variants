@@ -151,15 +151,12 @@ function App() {
 
         <NumberPad
           size={state.puzzle.size}
-          isPencilMode={state.isPencilMode}
           onNumberClick={handleNumberPadClick}
-          onClear={handleClear}
-          onTogglePencilMode={togglePencilMode}
           disabled={
             state.selectedCell === null ||
             state.puzzle.cells[state.selectedCell] !== null
           }
-          showPencilButton={settings.showPencilMarks || settings.autoFillCandidates}
+          showNumberPad={settings.showNumberPad}
         />
 
         {settings.showHints && (
@@ -178,8 +175,16 @@ function App() {
           onNewGame={handleNewGame}
           onShare={() => setShowShareModal(true)}
           onSettings={() => setShowSettingsModal(true)}
+          onClear={handleClear}
+          onTogglePencilMode={togglePencilMode}
           canUndo={canUndo}
           canRedo={canRedo}
+          isPencilMode={state.isPencilMode}
+          isPencilEnabled={settings.showPencilMarks || settings.autoFillCandidates}
+          isClearDisabled={
+            state.selectedCell === null ||
+            state.puzzle.cells[state.selectedCell] !== null
+          }
         />
       </main>
 

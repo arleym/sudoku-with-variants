@@ -6,6 +6,7 @@ export interface GameSettings {
   showHints: boolean;
   highlightSameNumbers: boolean;
   highlightRowColBox: boolean;
+  showNumberPad: boolean;
 }
 
 export const defaultSettings: GameSettings = {
@@ -16,4 +17,5 @@ export const defaultSettings: GameSettings = {
   showHints: false,
   highlightSameNumbers: true,
   highlightRowColBox: true,
+  showNumberPad: true,
 };

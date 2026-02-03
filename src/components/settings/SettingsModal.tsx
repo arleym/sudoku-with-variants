@@ -52,6 +52,11 @@ const SETTINGS_CONFIG: {
     label: 'Enable Hints',
     description: 'Show hint button for solving help',
   },
+  {
+    key: 'showNumberPad',
+    label: 'Show Number Pad',
+    description: 'Display number buttons for input',
+  },
 ];
 
 type Tab = 'settings' | 'info';
