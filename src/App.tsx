@@ -40,10 +40,6 @@ function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<GridSize>(state.puzzle.size);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(
-    state.puzzle.difficulty
-  );
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Load puzzle from URL if present
@@ -96,16 +92,12 @@ function App() {
   }, [state.selectedCell, clearCell]);
 
   const handleNewGame = useCallback(() => {
-    setSelectedSize(state.puzzle.size);
-    setSelectedDifficulty(state.puzzle.difficulty);
     setShowNewGameModal(true);
-  }, [state.puzzle.size, state.puzzle.difficulty]);
+  }, []);
 
   const handleStartNewGame = useCallback(
     async (size: GridSize, difficulty: Difficulty) => {
       setIsGenerating(true);
-      setSelectedSize(size);
-      setSelectedDifficulty(difficulty);
 
       // Use setTimeout to allow UI to update before generating
       setTimeout(() => {
@@ -198,8 +190,8 @@ function App() {
           <div className={styles.generating}>Generating puzzle...</div>
         ) : (
           <DifficultySelector
-            currentSize={selectedSize}
-            currentDifficulty={selectedDifficulty}
+            initialSize={state.puzzle.size}
+            initialDifficulty={state.puzzle.difficulty}
             onSelect={handleStartNewGame}
             onCancel={() => setShowNewGameModal(false)}
           />

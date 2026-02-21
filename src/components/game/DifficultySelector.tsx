@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import type { GridSize, Difficulty } from '../../types/puzzle';
 import { Button } from '../ui/Button';
 import styles from './DifficultySelector.module.css';
 
 interface DifficultySelectorProps {
-  currentSize: GridSize;
-  currentDifficulty: Difficulty;
+  initialSize: GridSize;
+  initialDifficulty: Difficulty;
   onSelect: (size: GridSize, difficulty: Difficulty) => void;
   onCancel: () => void;
 }
@@ -24,11 +25,14 @@ const DIFFICULTIES: { value: Difficulty; label: string }[] = [
 ];
 
 export function DifficultySelector({
-  currentSize,
-  currentDifficulty,
+  initialSize,
+  initialDifficulty,
   onSelect,
   onCancel,
 }: DifficultySelectorProps) {
+  const [selectedSize, setSelectedSize] = useState<GridSize>(initialSize);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(initialDifficulty);
+
   return (
     <div className={styles.selector}>
       <div className={styles.section}>
@@ -38,9 +42,9 @@ export function DifficultySelector({
             <button
               key={value}
               className={`${styles.option} ${
-                value === currentSize ? styles.selected : ''
+                value === selectedSize ? styles.selected : ''
               }`}
-              onClick={() => onSelect(value, currentDifficulty)}
+              onClick={() => setSelectedSize(value)}
             >
               {label}
             </button>
@@ -55,9 +59,9 @@ export function DifficultySelector({
             <button
               key={value}
               className={`${styles.option} ${
-                value === currentDifficulty ? styles.selected : ''
+                value === selectedDifficulty ? styles.selected : ''
               }`}
-              onClick={() => onSelect(currentSize, value)}
+              onClick={() => setSelectedDifficulty(value)}
             >
               {label}
             </button>
@@ -70,7 +74,7 @@ export function DifficultySelector({
           Cancel
         </Button>
         <Button
-          onClick={() => onSelect(currentSize, currentDifficulty)}
+          onClick={() => onSelect(selectedSize, selectedDifficulty)}
           variant="primary"
           size="medium"
         >

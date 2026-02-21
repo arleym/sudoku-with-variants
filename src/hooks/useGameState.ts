@@ -1,8 +1,58 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useEffect } from 'react';
 import type { GameState, GameAction, HistoryEntry } from '../types/game';
 import type { Puzzle, GridSize, Difficulty } from '../types/puzzle';
 import { isPuzzleComplete } from '../lib/puzzle/validator';
 import { generatePuzzle } from '../lib/puzzle/generator';
+
+const GAME_STORAGE_KEY = 'sudoku-game';
+
+interface StoredGameState {
+  puzzle: Puzzle;
+  userValues: (number | null)[];
+  pencilMarks: number[][];
+  isPencilMode: boolean;
+  isComplete: boolean;
+}
+
+function saveGameState(state: GameState): void {
+  try {
+    const stored: StoredGameState = {
+      puzzle: state.puzzle,
+      userValues: state.userValues,
+      pencilMarks: state.pencilMarks.map(set => Array.from(set)),
+      isPencilMode: state.isPencilMode,
+      isComplete: state.isComplete,
+    };
+    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(stored));
+  } catch (e) {
+    console.warn('Failed to save game state:', e);
+  }
+}
+
+function loadGameState(): GameState | null {
+  try {
+    const stored = localStorage.getItem(GAME_STORAGE_KEY);
+    if (!stored) return null;
+    const parsed: StoredGameState = JSON.parse(stored);
+    const pencilMarks = parsed.pencilMarks.map(arr => new Set<number>(arr));
+    return {
+      puzzle: parsed.puzzle,
+      userValues: parsed.userValues,
+      pencilMarks,
+      selectedCell: null,
+      isPencilMode: parsed.isPencilMode,
+      isComplete: parsed.isComplete,
+      history: [{
+        userValues: [...parsed.userValues],
+        pencilMarks: pencilMarks.map(s => new Set(s)),
+      }],
+      historyIndex: 0,
+    };
+  } catch (e) {
+    console.warn('Failed to load game state:', e);
+    return null;
+  }
+}
 
 function createInitialState(puzzle: Puzzle): GameState {
   const initialHistory: HistoryEntry = {
@@ -219,8 +269,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 export function useGameState(initialPuzzle?: Puzzle) {
-  const puzzle = initialPuzzle ?? generatePuzzle(9, 'easy');
-  const [state, dispatch] = useReducer(gameReducer, puzzle, createInitialState);
+  const [state, dispatch] = useReducer(gameReducer, undefined, () => {
+    if (initialPuzzle) return createInitialState(initialPuzzle);
+    const saved = loadGameState();
+    if (saved) return saved;
+    return createInitialState(generatePuzzle(9, 'easy'));
+  });
+
+  useEffect(() => {
+    saveGameState(state);
+  }, [state.puzzle, state.userValues, state.pencilMarks, state.isPencilMode, state.isComplete]);
 
   const selectCell = useCallback((index: number | null) => {
     dispatch({ type: 'SELECT_CELL', index });
