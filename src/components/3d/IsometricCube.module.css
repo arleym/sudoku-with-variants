@@ -1,0 +1,22 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.svg {
+  overflow: visible;
+}
+
+.slab {
+  transition: opacity 0.15s ease;
+}
+
+.slab:hover {
+  opacity: 0.9 !important;
+}
+
+.activeSlab {
+  filter: drop-shadow(0 0 4px rgba(74, 144, 217, 0.5));
+}

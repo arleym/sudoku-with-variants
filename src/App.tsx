@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import type { GridSize, Difficulty } from './types/puzzle';
 import { useGameState } from './hooks/useGameState';
 import { useSettings } from './hooks/useSettings';
@@ -130,6 +131,9 @@ function App() {
 
   return (
     <div className={styles.app}>
+      <div className={styles.modeSwitchBar}>
+        <Link to="/3d" className={styles.modeSwitch}>Try 3D Mode</Link>
+      </div>
       <main className={styles.main}>
         <SudokuGrid
           size={state.puzzle.size}

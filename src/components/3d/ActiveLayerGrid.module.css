@@ -1,0 +1,133 @@
+:root {
+  --pillar-highlight-bg: #ede7f6;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  width: min(80vw, 340px);
+  height: min(80vw, 340px);
+  border: 2px solid var(--box-border, #333);
+  background: var(--grid-bg, #fff);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cell-bg, #fff);
+  border: 1px solid var(--cell-border, #ccc);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  position: relative;
+  font-size: clamp(1.2rem, 8vw, 2rem);
+  box-sizing: border-box;
+}
+
+.cell:hover {
+  background: var(--cell-hover-bg, #f0f0f0);
+}
+
+.cell:focus {
+  outline: 2px solid var(--focus-color, #4a90d9);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+/* Box borders (2×2 groups) */
+.boxBorderRight {
+  border-right: 2px solid var(--box-border, #333);
+}
+
+.boxBorderBottom {
+  border-bottom: 2px solid var(--box-border, #333);
+}
+
+/* Cell states */
+.selected {
+  background: var(--cell-selected-bg, #bbdefb) !important;
+}
+
+.highlighted {
+  background: var(--cell-highlighted-bg, #fff9c4) !important;
+}
+
+.related {
+  background: var(--cell-related-bg, #e3f2fd);
+}
+
+.pillar {
+  background: var(--pillar-highlight-bg, #ede7f6) !important;
+}
+
+.error {
+  background: var(--cell-error-bg, #ffcdd2) !important;
+}
+
+.given {
+  font-weight: bold;
+  color: var(--given-color, #1a1a1a);
+}
+
+.value {
+  line-height: 1;
+}
+
+/* Pencil marks: 2×2 grid */
+.pencil {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.pencilMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55em;
+  color: var(--pencil-color, #666);
+  line-height: 1;
+}
+
+.pencilVisible {
+  color: var(--pencil-color, #555);
+}
+
+/* Pillar info bar */
+.pillarInfo {
+  display: flex;
+  justify-content: center;
+  height: 18px;
+}
+
+.pillarLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted, #666);
+}

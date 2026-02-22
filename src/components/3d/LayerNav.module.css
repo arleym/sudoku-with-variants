@@ -1,0 +1,74 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.dots {
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--button-border);
+  background: var(--button-bg);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.dot:hover {
+  transform: scale(1.2);
+  border-color: var(--focus-color);
+}
+
+.dotActive {
+  background: var(--focus-color);
+  border-color: var(--focus-color);
+  transform: scale(1.2);
+}
+
+.arrow {
+  font-size: 1.8rem;
+  line-height: 1;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: var(--button-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  padding: 0;
+}
+
+.arrow:hover:not(:disabled) {
+  background: var(--button-hover-bg);
+}
+
+.arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

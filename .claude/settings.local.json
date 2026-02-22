@@ -5,7 +5,8 @@
       "Bash(npm run build:*)",
       "Bash(curl:*)",
       "Bash(convert:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pkill:*)"
     ]
   }
 }
