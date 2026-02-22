@@ -4,51 +4,6 @@
   flex-direction: column;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background: var(--card-bg, #fff);
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
-}
-
-.headerContent {
-  display: flex;
-  flex-direction: column;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-color, #333);
-}
-
-.subtitle {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted, #666);
-  text-transform: capitalize;
-}
-
-.modeSwitch {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.4rem 0.9rem;
-  background: var(--button-bg, #f5f5f5);
-  border: 1px solid var(--button-border, #ccc);
-  border-radius: 6px;
-  color: var(--button-color, #333);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.15s;
-}
-
-.modeSwitch:hover {
-  background: var(--button-hover-bg, #e0e0e0);
-}
 
 .main {
   flex: 1;
@@ -83,24 +38,6 @@
   color: var(--text-muted, #666);
 }
 
-.difficultyPicker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.difficultyPicker p {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.difficultyButtons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
 
 .completeContent {
   text-align: center;

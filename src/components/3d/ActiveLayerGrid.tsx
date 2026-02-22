@@ -3,15 +3,17 @@ import { getAllConflicts3D, getRelatedIndices3D } from '../../lib/puzzle3d/valid
 import styles from './ActiveLayerGrid.module.css';
 
 interface ActiveLayerGridProps {
+  size: number;                         // 4 or 9
   activeLayer: number;
-  puzzleCells: (number | null)[];   // all 64
-  userValues: (number | null)[];    // all 64
-  pencilMarks: Set<number>[];       // all 64
-  selectedCell: number | null;      // 0–15 within the layer
-  onCellClick: (index: number) => void;  // 0–15
+  puzzleCells: (number | null)[];
+  userValues: (number | null)[];
+  pencilMarks: Set<number>[];
+  selectedCell: number | null;          // 0..(size²-1) within the layer
+  onCellClick: (index: number) => void;
 }
 
 export function ActiveLayerGrid({
+  size,
   activeLayer,
   puzzleCells,
   userValues,
@@ -19,43 +21,54 @@ export function ActiveLayerGrid({
   selectedCell,
   onCellClick,
 }: ActiveLayerGridProps) {
-  // Merged all values for conflict detection
-  const allValues = useMemo(() => puzzleCells.map((c, i) => c ?? userValues[i]), [puzzleCells, userValues]);
+  const layerSize = size * size;
+  const boxSize = Math.sqrt(size);
+  const allValues = useMemo(
+    () => puzzleCells.map((c, i) => c ?? userValues[i]),
+    [puzzleCells, userValues]
+  );
 
-  // Flat index in 64-cell grid for the selected cell
-  const selectedFlatIndex = selectedCell !== null ? activeLayer * 16 + selectedCell : null;
+  const selectedFlatIndex = selectedCell !== null ? activeLayer * layerSize + selectedCell : null;
+  const conflicts = useMemo(() => getAllConflicts3D(allValues, size), [allValues, size]);
 
-  // Conflicts across entire 3D grid
-  const conflicts = useMemo(() => getAllConflicts3D(allValues), [allValues]);
-
-  // Related indices (row/col/box in layer only) for selected cell
   const relatedLayer = useMemo(() => {
     if (selectedFlatIndex === null) return new Set<number>();
-    return getRelatedIndices3D(selectedFlatIndex);
-  }, [selectedFlatIndex]);
+    return getRelatedIndices3D(selectedFlatIndex, size);
+  }, [selectedFlatIndex, size]);
 
-  // Same-value highlighting (within active layer)
   const selectedValue = selectedFlatIndex !== null ? allValues[selectedFlatIndex] : null;
   const sameValueIndices = useMemo(() => {
     const set = new Set<number>();
     if (selectedValue === null) return set;
-    for (let i = 0; i < 64; i++) {
+    for (let i = 0; i < allValues.length; i++) {
       if (allValues[i] === selectedValue) set.add(i);
     }
     return set;
   }, [selectedValue, allValues]);
 
+  // Max grid size in px — slightly larger for 9×9
+  const gridPx = size === 9 ? 'min(88vw, 400px)' : 'min(80vw, 340px)';
+  // Font size for cell values
+  const fontSize = size === 9 ? 'clamp(0.85rem, 5vw, 1.4rem)' : 'clamp(1.2rem, 8vw, 2rem)';
+
   return (
-    <div className={styles.wrapper} key={`layer-${activeLayer}`}>
+    <div className={styles.wrapper} key={`layer-${activeLayer}-${size}`}>
       <div
         className={styles.grid}
+        style={{
+          gridTemplateColumns: `repeat(${size}, 1fr)`,
+          gridTemplateRows: `repeat(${size}, 1fr)`,
+          width: gridPx,
+          height: gridPx,
+          fontSize,
+        }}
         role="grid"
-        aria-label={`Layer ${activeLayer + 1} of 4×4×4 Sudoku`}
+        aria-label={`Layer ${activeLayer + 1} of ${size}×${size}×${size} Sudoku`}
       >
-        {Array.from({ length: 16 }, (_, i) => {
-          const row = Math.floor(i / 4);
-          const col = i % 4;
-          const flatIdx = activeLayer * 16 + i;
+        {Array.from({ length: layerSize }, (_, i) => {
+          const row = Math.floor(i / size);
+          const col = i % size;
+          const flatIdx = activeLayer * layerSize + i;
 
           const puzzleVal = puzzleCells[flatIdx];
           const userVal = userValues[flatIdx];
@@ -67,14 +80,14 @@ export function ActiveLayerGrid({
           const isHighlighted = sameValueIndices.has(flatIdx) && !isSelected;
           const marks = pencilMarks[flatIdx];
 
-          // Box borders
-          const isBoxBorderRight = col === 1;
-          const isBoxBorderBottom = row === 1;
+          // Box borders: bold line after each box boundary (not at grid edge)
+          const isBoxBorderRight = col < size - 1 && (col + 1) % boxSize === 0;
+          const isBoxBorderBottom = row < size - 1 && (row + 1) % boxSize === 0;
 
           const cellClass = [
             styles.cell,
             isSelected && styles.selected,
-            isHighlighted && !isSelected && styles.highlighted,
+            isHighlighted && styles.highlighted,
             isRelated && styles.related,
             hasError && styles.error,
             isGiven && styles.given,
@@ -96,9 +109,15 @@ export function ActiveLayerGrid({
               {displayVal !== null ? (
                 <span className={styles.value}>{displayVal}</span>
               ) : marks.size > 0 ? (
-                <div className={styles.pencil}>
-                  {[1, 2, 3, 4].map(n => (
-                    <span key={n} className={`${styles.pencilMark} ${marks.has(n) ? styles.pencilVisible : ''}`}>
+                <div
+                  className={styles.pencil}
+                  style={{ gridTemplateColumns: `repeat(${boxSize}, 1fr)` }}
+                >
+                  {Array.from({ length: size }, (_, n) => n + 1).map(n => (
+                    <span
+                      key={n}
+                      className={`${styles.pencilMark} ${marks.has(n) ? styles.pencilVisible : ''}`}
+                    >
                       {marks.has(n) ? n : ''}
                     </span>
                   ))}
@@ -109,11 +128,11 @@ export function ActiveLayerGrid({
         })}
       </div>
 
-      {/* Pillar indicator: show which cells in OTHER layers are in the same pillar */}
       {selectedFlatIndex !== null && (
         <div className={styles.pillarInfo}>
           <span className={styles.pillarLabel}>
-            Pillar: ({Math.floor((selectedFlatIndex % 16) / 4) + 1}, {(selectedFlatIndex % 4) + 1}) across all layers
+            Pillar ({Math.floor((selectedFlatIndex % layerSize) / size) + 1},{' '}
+            {(selectedFlatIndex % size) + 1}) — same position across all layers
           </span>
         </div>
       )}

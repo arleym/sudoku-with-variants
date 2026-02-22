@@ -1,11 +1,12 @@
 import styles from './LayerNav.module.css';
 
 interface LayerNavProps {
+  depth: number;          // number of layers (4 or 9)
   activeLayer: number;
   onChangeLayer: (layer: number) => void;
 }
 
-export function LayerNav({ activeLayer, onChangeLayer }: LayerNavProps) {
+export function LayerNav({ depth, activeLayer, onChangeLayer }: LayerNavProps) {
   return (
     <div className={styles.nav}>
       <button
@@ -18,9 +19,9 @@ export function LayerNav({ activeLayer, onChangeLayer }: LayerNavProps) {
       </button>
 
       <div className={styles.info}>
-        <span className={styles.label}>Layer {activeLayer + 1} / 4</span>
-        <div className={styles.dots}>
-          {[0, 1, 2, 3].map(i => (
+        <span className={styles.label}>Layer {activeLayer + 1} / {depth}</span>
+        <div className={`${styles.dots} ${depth > 4 ? styles.dotsSmall : ''}`}>
+          {Array.from({ length: depth }, (_, i) => (
             <button
               key={i}
               className={`${styles.dot} ${i === activeLayer ? styles.dotActive : ''}`}
@@ -34,8 +35,8 @@ export function LayerNav({ activeLayer, onChangeLayer }: LayerNavProps) {
 
       <button
         className={styles.arrow}
-        onClick={() => onChangeLayer(Math.min(3, activeLayer + 1))}
-        disabled={activeLayer === 3}
+        onClick={() => onChangeLayer(Math.min(depth - 1, activeLayer + 1))}
+        disabled={activeLayer === depth - 1}
         aria-label="Next layer"
       >
         ›

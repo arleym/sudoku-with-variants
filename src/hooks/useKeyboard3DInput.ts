@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
 interface UseKeyboard3DInputProps {
+  size: number;             // 4 or 9 — grid size per layer
   activeLayer: number;
-  selectedCell: number | null;        // 0–15 within the active layer
+  selectedCell: number | null;        // 0..(size*size-1) within the active layer
   isPencilMode: boolean;
   onSelectCell: (index: number | null) => void;
   onSetValue: (flatIndex: number, value: number | null) => void;
@@ -16,6 +17,7 @@ interface UseKeyboard3DInputProps {
 }
 
 export function useKeyboard3DInput({
+  size,
   activeLayer,
   selectedCell,
   isPencilMode,
@@ -30,6 +32,9 @@ export function useKeyboard3DInput({
   isGivenCell,
 }: UseKeyboard3DInputProps) {
   useEffect(() => {
+    const maxLayer = size - 1;
+    const layerSize = size * size;
+
     function handleKeyDown(e: KeyboardEvent) {
       // Undo / Redo
       if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
@@ -50,7 +55,7 @@ export function useKeyboard3DInput({
         return;
       }
 
-      // Layer switching: [ and ]  or PageUp/PageDown
+      // Layer switching: [ / ]  or  PageUp / PageDown
       if (e.key === '[' || e.key === 'PageDown') {
         e.preventDefault();
         onChangeLayer(Math.max(0, activeLayer - 1));
@@ -58,48 +63,43 @@ export function useKeyboard3DInput({
       }
       if (e.key === ']' || e.key === 'PageUp') {
         e.preventDefault();
-        onChangeLayer(Math.min(3, activeLayer + 1));
+        onChangeLayer(Math.min(maxLayer, activeLayer + 1));
         return;
       }
 
       // Arrow navigation within layer
       if (selectedCell !== null && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-        const row = Math.floor(selectedCell / 4);
-        const col = selectedCell % 4;
+        const row = Math.floor(selectedCell / size);
+        const col = selectedCell % size;
         let newRow = row;
         let newCol = col;
 
-        if (e.key === 'ArrowUp') newRow = Math.max(0, row - 1);
-        if (e.key === 'ArrowDown') newRow = Math.min(3, row + 1);
-        if (e.key === 'ArrowLeft') newCol = Math.max(0, col - 1);
-        if (e.key === 'ArrowRight') newCol = Math.min(3, col + 1);
+        if (e.key === 'ArrowUp')    newRow = Math.max(0, row - 1);
+        if (e.key === 'ArrowDown')  newRow = Math.min(size - 1, row + 1);
+        if (e.key === 'ArrowLeft')  newCol = Math.max(0, col - 1);
+        if (e.key === 'ArrowRight') newCol = Math.min(size - 1, col + 1);
 
-        onSelectCell(newRow * 4 + newCol);
+        onSelectCell(newRow * size + newCol);
         return;
       }
 
       if (selectedCell === null) return;
 
-      const flatIndex = activeLayer * 16 + selectedCell;
+      const flatIndex = activeLayer * layerSize + selectedCell;
 
-      // Number input 1-4
-      if (/^[1-4]$/.test(e.key)) {
-        const value = parseInt(e.key);
+      // Number input 1–size
+      const num = parseInt(e.key);
+      if (!isNaN(num) && num >= 1 && num <= size) {
         if (isGivenCell(flatIndex)) return;
-        if (isPencilMode) {
-          onTogglePencilMark(flatIndex, value);
-        } else {
-          onSetValue(flatIndex, value);
-        }
+        if (isPencilMode) onTogglePencilMark(flatIndex, num);
+        else onSetValue(flatIndex, num);
         return;
       }
 
-      // Clear cell
+      // Clear
       if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
-        if (!isGivenCell(flatIndex)) {
-          onClearCell(flatIndex);
-        }
+        if (!isGivenCell(flatIndex)) onClearCell(flatIndex);
         return;
       }
 
@@ -113,6 +113,7 @@ export function useKeyboard3DInput({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    size,
     activeLayer,
     selectedCell,
     isPencilMode,

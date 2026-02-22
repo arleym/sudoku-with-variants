@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import type { GridSize, Difficulty } from './types/puzzle';
 import { useGameState } from './hooks/useGameState';
 import { useSettings } from './hooks/useSettings';
@@ -8,8 +7,8 @@ import { usePuzzleFromUrl } from './hooks/usePuzzleFromUrl';
 import { SudokuGrid } from './components/grid/SudokuGrid';
 import { NumberPad } from './components/ui/NumberPad';
 import { GameControls } from './components/game/GameControls';
-import { DifficultySelector } from './components/game/DifficultySelector';
 import { HintPanel } from './components/game/HintPanel';
+import { NewGameModal, consumePendingNewGame } from './components/game/NewGameModal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { ShareModal } from './components/share/ShareModal';
 import { Modal } from './components/ui/Modal';
@@ -50,6 +49,22 @@ function App() {
     }
   }, [urlPuzzle, urlLoading, loadPuzzle]);
 
+  // Check for pending new game handed off from 3D mode
+  useEffect(() => {
+    const pending = consumePendingNewGame();
+    if (pending?.mode === '2d') {
+      setIsGenerating(true);
+      setTimeout(() => {
+        try {
+          newPuzzle(pending.size2d, pending.difficulty);
+        } finally {
+          setIsGenerating(false);
+        }
+      }, 50);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Show completion modal when puzzle is solved
   useEffect(() => {
     if (state.isComplete) {
@@ -57,7 +72,6 @@ function App() {
     }
   }, [state.isComplete]);
 
-  // Keyboard input handling
   useKeyboardInput({
     size: state.puzzle.size,
     selectedCell: state.selectedCell,
@@ -76,31 +90,19 @@ function App() {
     (value: number) => {
       if (state.selectedCell === null) return;
       if (state.puzzle.cells[state.selectedCell] !== null) return;
-
-      if (state.isPencilMode) {
-        togglePencilMark(state.selectedCell, value);
-      } else {
-        setValue(state.selectedCell, value);
-      }
+      if (state.isPencilMode) togglePencilMark(state.selectedCell, value);
+      else setValue(state.selectedCell, value);
     },
     [state.selectedCell, state.puzzle.cells, state.isPencilMode, setValue, togglePencilMark]
   );
 
   const handleClear = useCallback(() => {
-    if (state.selectedCell !== null) {
-      clearCell(state.selectedCell);
-    }
+    if (state.selectedCell !== null) clearCell(state.selectedCell);
   }, [state.selectedCell, clearCell]);
 
-  const handleNewGame = useCallback(() => {
-    setShowNewGameModal(true);
-  }, []);
-
-  const handleStartNewGame = useCallback(
-    async (size: GridSize, difficulty: Difficulty) => {
+  const handleStart2D = useCallback(
+    (size: GridSize, difficulty: Difficulty) => {
       setIsGenerating(true);
-
-      // Use setTimeout to allow UI to update before generating
       setTimeout(() => {
         try {
           newPuzzle(size, difficulty);
@@ -131,9 +133,6 @@ function App() {
 
   return (
     <div className={styles.app}>
-      <div className={styles.modeSwitchBar}>
-        <Link to="/3d" className={styles.modeSwitch}>Try 3D Mode</Link>
-      </div>
       <main className={styles.main}>
         <SudokuGrid
           size={state.puzzle.size}
@@ -168,7 +167,7 @@ function App() {
           onUndo={undo}
           onRedo={redo}
           onReset={resetPuzzle}
-          onNewGame={handleNewGame}
+          onNewGame={() => setShowNewGameModal(true)}
           onShare={() => setShowShareModal(true)}
           onSettings={() => setShowSettingsModal(true)}
           onClear={handleClear}
@@ -190,16 +189,16 @@ function App() {
         onClose={() => setShowNewGameModal(false)}
         title="New Game"
       >
-        {isGenerating ? (
-          <div className={styles.generating}>Generating puzzle...</div>
-        ) : (
-          <DifficultySelector
-            initialSize={state.puzzle.size}
-            initialDifficulty={state.puzzle.difficulty}
-            onSelect={handleStartNewGame}
-            onCancel={() => setShowNewGameModal(false)}
-          />
-        )}
+        <NewGameModal
+          currentMode="2d"
+          initialSize2D={state.puzzle.size}
+          initialSize3D={4}
+          initialDifficulty={state.puzzle.difficulty}
+          isGenerating={isGenerating}
+          onStart2D={handleStart2D}
+          onStart3D={() => {/* handled by navigation inside NewGameModal */}}
+          onClose={() => setShowNewGameModal(false)}
+        />
       </Modal>
 
       {/* Settings Modal */}
@@ -229,7 +228,7 @@ function App() {
             <Button
               onClick={() => {
                 setShowCompleteModal(false);
-                handleNewGame();
+                setShowNewGameModal(true);
               }}
               variant="primary"
             >

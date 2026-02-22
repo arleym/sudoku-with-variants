@@ -23,6 +23,14 @@
 .dots {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 140px;
+}
+
+.dotsSmall .dot {
+  width: 7px;
+  height: 7px;
 }
 
 .dot {

@@ -15,6 +15,10 @@ interface StoredGame3DState {
   isComplete: boolean;
 }
 
+function totalCells(puzzle: Puzzle3D): number {
+  return puzzle.size * puzzle.size * puzzle.depth;
+}
+
 function saveState(state: Game3DState): void {
   try {
     const stored: StoredGame3DState = {
@@ -36,6 +40,8 @@ function loadState(): Game3DState | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed: StoredGame3DState = JSON.parse(raw);
+    // Validate stored data has the right structure
+    if (!parsed.puzzle?.size || !parsed.puzzle?.depth) return null;
     const pencilMarks = parsed.pencilMarks.map(arr => new Set<number>(arr));
     return {
       puzzle: parsed.puzzle,
@@ -59,9 +65,10 @@ function loadState(): Game3DState | null {
 }
 
 function createInitialState(puzzle: Puzzle3D): Game3DState {
+  const n = totalCells(puzzle);
   const initialEntry: History3DEntry = {
-    userValues: new Array(64).fill(null),
-    pencilMarks: new Array(64).fill(null).map(() => new Set<number>()),
+    userValues: new Array(n).fill(null),
+    pencilMarks: new Array(n).fill(null).map(() => new Set<number>()),
     activeLayer: 0,
   };
   return {
@@ -102,21 +109,17 @@ function reducer(state: Game3DState, action: Game3DAction): Game3DState {
 
     case 'SET_VALUE': {
       const { index, value } = action;
-      // flat index in the 64-cell grid
       if (state.puzzle.cells[index] !== null) return state;
 
       const { userValues, pencilMarks } = cloneEditables(state);
       userValues[index] = value;
       if (value !== null) pencilMarks[index] = new Set();
 
-      const complete = isComplete3D(state.puzzle.cells, userValues, state.puzzle.solution);
+      const complete = isComplete3D(
+        state.puzzle.cells, userValues, state.puzzle.solution, state.puzzle.size
+      );
 
-      return pushHistory({
-        ...state,
-        userValues,
-        pencilMarks,
-        isComplete: complete,
-      });
+      return pushHistory({ ...state, userValues, pencilMarks, isComplete: complete });
     }
 
     case 'TOGGLE_PENCIL_MARK': {
@@ -175,9 +178,10 @@ function reducer(state: Game3DState, action: Game3DAction): Game3DState {
     }
 
     case 'RESET_PUZZLE': {
+      const n = totalCells(state.puzzle);
       const entry: History3DEntry = {
-        userValues: new Array(64).fill(null),
-        pencilMarks: new Array(64).fill(null).map(() => new Set<number>()),
+        userValues: new Array(n).fill(null),
+        pencilMarks: new Array(n).fill(null).map(() => new Set<number>()),
         activeLayer: 0,
       };
       return {
@@ -204,7 +208,7 @@ export function useGame3DState() {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const saved = loadState();
     if (saved) return saved;
-    return createInitialState(generatePuzzle3D('easy'));
+    return createInitialState(generatePuzzle3D(4, 'easy'));
   });
 
   useEffect(() => {
@@ -237,11 +241,10 @@ export function useGame3DState() {
 
   const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
-
   const resetPuzzle = useCallback(() => dispatch({ type: 'RESET_PUZZLE' }), []);
 
-  const newPuzzle = useCallback((difficulty: Difficulty) => {
-    const puzzle = generatePuzzle3D(difficulty);
+  const newPuzzle = useCallback((size: 4 | 9, difficulty: Difficulty) => {
+    const puzzle = generatePuzzle3D(size, difficulty);
     dispatch({ type: 'NEW_PUZZLE', puzzle });
   }, []);
 

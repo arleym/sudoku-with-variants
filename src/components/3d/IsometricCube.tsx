@@ -1,87 +1,109 @@
 import styles from './IsometricCube.module.css';
 
 interface IsometricCubeProps {
-  puzzle3DCells: (number | null)[];   // 64 elements
-  userValues: (number | null)[];      // 64 elements
+  size: number;                       // 4 or 9
+  depth: number;                      // 4 or 9
+  puzzle3DCells: (number | null)[];
+  userValues: (number | null)[];
   activeLayer: number;
   onLayerClick: (layer: number) => void;
 }
 
-// Isometric projection constants
-// We draw slabs stacked top to bottom (layer 0 = top, layer 3 = bottom)
-// Each slab: a parallelogram (isometric top face) with a 4×4 grid of dots
+// Accent colors per layer (cycles for > 4 layers)
+const LAYER_COLORS = [
+  '#4a90d9', '#5ba85c', '#e07b39', '#9b59b6',
+  '#e74c3c', '#1abc9c', '#f39c12', '#8e44ad', '#2980b9',
+];
+const LAYER_COLORS_LIGHT = [
+  '#bbdefb', '#c8e6c9', '#ffe0b2', '#e1bee7',
+  '#ffcdd2', '#b2dfdb', '#fff9c4', '#e8daef', '#d6eaf8',
+];
 
-const SVG_W = 240;
-const SVG_H = 220;
-
-// Isometric unit vectors
-const IX = 28;   // x-component of right-step
-const IY = 14;   // y-component of right-step (positive = down)
-const JX = -28;  // x-component of down-step
-const JY = 14;   // y-component of down-step
-const LAYER_STEP_Y = 34; // vertical gap between slabs
-
-// Origin for the top-left corner of the topmost slab
-const ORIGIN_X = SVG_W / 2;
-const ORIGIN_Y = 28;
-
-function slabOrigin(layer: number): [number, number] {
-  return [ORIGIN_X, ORIGIN_Y + layer * LAYER_STEP_Y];
+function getIsoParams(size: number, depth: number) {
+  const SVG_W = 240;
+  // Cell step in screen units: fit (size cols + size rows) into SVG_W with margin
+  const IX = Math.max(8, Math.floor(110 / size));
+  const IY = Math.floor(IX / 2);
+  const JX = -IX;
+  const JY = IY;
+  // Layer vertical spacing shrinks for many layers
+  const LAYER_STEP_Y = depth <= 4 ? 34 : 18;
+  const ORIGIN_X = SVG_W / 2;
+  const ORIGIN_Y = 20;
+  const SVG_H = ORIGIN_Y + depth * LAYER_STEP_Y + size * IY + 16;
+  return { SVG_W, SVG_H, IX, IY, JX, JY, LAYER_STEP_Y, ORIGIN_X, ORIGIN_Y };
 }
 
-function cellCenter(layer: number, row: number, col: number): [number, number] {
-  const [ox, oy] = slabOrigin(layer);
-  // Move col steps in I direction and row steps in J direction, then center in cell
-  const x = ox + col * IX + row * JX + (IX + JX) / 2;
-  const y = oy + col * IY + row * JY + (IY + JY) / 2;
-  return [x, y];
+function slabOrigin(layer: number, p: ReturnType<typeof getIsoParams>): [number, number] {
+  return [p.ORIGIN_X, p.ORIGIN_Y + layer * p.LAYER_STEP_Y];
 }
 
-function slabPath(layer: number): string {
-  const [ox, oy] = slabOrigin(layer);
-  // 4 corners of the parallelogram top face
-  // top-left, top-right, bottom-right, bottom-left
+function slabPath(layer: number, size: number, p: ReturnType<typeof getIsoParams>): string {
+  const [ox, oy] = slabOrigin(layer, p);
   const tl = [ox, oy];
-  const tr = [ox + 4 * IX, oy + 4 * IY];
-  const br = [ox + 4 * IX + 4 * JX, oy + 4 * IY + 4 * JY];
-  const bl = [ox + 4 * JX, oy + 4 * JY];
+  const tr = [ox + size * p.IX, oy + size * p.IY];
+  const br = [ox + size * p.IX + size * p.JX, oy + size * p.IY + size * p.JY];
+  const bl = [ox + size * p.JX, oy + size * p.JY];
   return `M${tl[0]},${tl[1]} L${tr[0]},${tr[1]} L${br[0]},${br[1]} L${bl[0]},${bl[1]} Z`;
 }
 
-function cellPath(layer: number, row: number, col: number): string {
-  const [ox, oy] = slabOrigin(layer);
-  const tlx = ox + col * IX + row * JX;
-  const tly = oy + col * IY + row * JY;
-  const trx = tlx + IX;
-  const tr_y = tly + IY;
-  const brx = tlx + IX + JX;
-  const bry = tly + IY + JY;
-  const blx = tlx + JX;
-  const bly = tly + JY;
-  return `M${tlx},${tly} L${trx},${tr_y} L${brx},${bry} L${blx},${bly} Z`;
+function cellPath(layer: number, row: number, col: number, p: ReturnType<typeof getIsoParams>): string {
+  const [ox, oy] = slabOrigin(layer, p);
+  const tlx = ox + col * p.IX + row * p.JX;
+  const tly = oy + col * p.IY + row * p.JY;
+  return [
+    `M${tlx},${tly}`,
+    `L${tlx + p.IX},${tly + p.IY}`,
+    `L${tlx + p.IX + p.JX},${tly + p.IY + p.JY}`,
+    `L${tlx + p.JX},${tly + p.JY}`,
+    'Z',
+  ].join(' ');
 }
 
-// Accent colors for filled cells per layer
-const LAYER_COLORS = ['#4a90d9', '#5ba85c', '#e07b39', '#9b59b6'];
-const LAYER_COLORS_LIGHT = ['#bbdefb', '#c8e6c9', '#ffe0b2', '#e1bee7'];
+function slabCenter(layer: number, size: number, p: ReturnType<typeof getIsoParams>): [number, number] {
+  const [ox, oy] = slabOrigin(layer, p);
+  const halfSteps = (size - 1) / 2;
+  const cx = ox + halfSteps * p.IX + halfSteps * p.JX + (p.IX + p.JX) / 2;
+  const cy = oy + halfSteps * p.IY + halfSteps * p.JY + (p.IY + p.JY) / 2;
+  return [cx, cy];
+}
 
-export function IsometricCube({ puzzle3DCells, userValues, activeLayer, onLayerClick }: IsometricCubeProps) {
+// For large sizes, only show filled-cell markers for a small sample to keep SVG fast
+const MAX_DOTS = 81;
+
+export function IsometricCube({ size, depth, puzzle3DCells, userValues, activeLayer, onLayerClick }: IsometricCubeProps) {
+  const p = getIsoParams(size, depth);
+  const layerSize = size * size;
+  // Box lines at multiples of boxSize
+  const boxSize = Math.sqrt(size);
+  const gridLines = Array.from({ length: size + 1 }, (_, i) => i);
+
   return (
     <div className={styles.container}>
       <svg
-        width={SVG_W}
-        height={SVG_H}
-        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+        width={p.SVG_W}
+        height={p.SVG_H}
+        viewBox={`0 0 ${p.SVG_W} ${p.SVG_H}`}
         className={styles.svg}
         aria-label="3D Sudoku cube overview"
       >
-        {/* Draw layers from bottom to top so upper layers render on top */}
-        {[3, 2, 1, 0].map(layer => {
+        {/* Draw layers bottom-to-top so upper layers paint over lower */}
+        {Array.from({ length: depth }, (_, i) => depth - 1 - i).map(layer => {
           const isActive = layer === activeLayer;
-          const baseColor = isActive ? LAYER_COLORS_LIGHT[layer] : '#f5f5f5';
-          const strokeColor = isActive ? LAYER_COLORS[layer] : '#bbb';
-          const strokeWidth = isActive ? 2 : 1;
-          const opacity = isActive ? 1 : 0.65;
+          const baseColor = isActive ? LAYER_COLORS_LIGHT[layer % LAYER_COLORS_LIGHT.length] : '#f0f0f0';
+          const strokeColor = isActive ? LAYER_COLORS[layer % LAYER_COLORS.length] : '#bbb';
+          const opacity = isActive ? 1 : 0.6;
+
+          // Collect filled cells for this layer (cap at MAX_DOTS for large grids)
+          const filledCells: number[] = [];
+          for (let i = 0; i < layerSize && filledCells.length < MAX_DOTS; i++) {
+            const flatIdx = layer * layerSize + i;
+            if ((puzzle3DCells[flatIdx] ?? userValues[flatIdx]) !== null) {
+              filledCells.push(i);
+            }
+          }
+
+          const [cx, cy] = slabCenter(layer, size, p);
 
           return (
             <g
@@ -92,74 +114,58 @@ export function IsometricCube({ puzzle3DCells, userValues, activeLayer, onLayerC
             >
               {/* Slab background */}
               <path
-                d={slabPath(layer)}
+                d={slabPath(layer, size, p)}
                 fill={baseColor}
                 stroke={strokeColor}
-                strokeWidth={strokeWidth}
+                strokeWidth={isActive ? 1.5 : 0.8}
                 className={isActive ? styles.activeSlab : ''}
               />
 
-              {/* Cell fills for filled cells */}
-              {Array.from({ length: 16 }, (_, i) => {
-                const row = Math.floor(i / 4);
-                const col = i % 4;
-                const flatIdx = layer * 16 + i;
-                const val = puzzle3DCells[flatIdx] ?? userValues[flatIdx];
-                if (val === null) return null;
-
+              {/* Filled cell indicators */}
+              {filledCells.map(i => {
+                const row = Math.floor(i / size);
+                const col = i % size;
                 return (
                   <path
                     key={i}
-                    d={cellPath(layer, row, col)}
-                    fill={LAYER_COLORS[layer]}
-                    opacity={0.7}
+                    d={cellPath(layer, row, col, p)}
+                    fill={LAYER_COLORS[layer % LAYER_COLORS.length]}
+                    opacity={0.65}
                   />
                 );
               })}
 
-              {/* Slab border lines (grid lines within slab) */}
-              {[0, 1, 2, 3, 4].map(i => {
-                const [ox, oy] = slabOrigin(layer);
-                // Horizontal lines (parallel to I)
-                const hx1 = ox + i * JX;
-                const hy1 = oy + i * JY;
-                const hx2 = hx1 + 4 * IX;
-                const hy2 = hy1 + 4 * IY;
-                // Vertical lines (parallel to J)
-                const vx1 = ox + i * IX;
-                const vy1 = oy + i * IY;
-                const vx2 = vx1 + 4 * JX;
-                const vy2 = vy1 + 4 * JY;
-
-                const isBold = i === 0 || i === 2 || i === 4;
+              {/* Grid lines */}
+              {gridLines.map(i => {
+                const [ox, oy] = slabOrigin(layer, p);
+                const isBold = i % boxSize === 0;
                 return (
                   <g key={i}>
-                    <line x1={hx1} y1={hy1} x2={hx2} y2={hy2}
-                      stroke={strokeColor} strokeWidth={isBold ? 1.5 : 0.5} opacity={0.6} />
-                    <line x1={vx1} y1={vy1} x2={vx2} y2={vy2}
-                      stroke={strokeColor} strokeWidth={isBold ? 1.5 : 0.5} opacity={0.6} />
+                    <line
+                      x1={ox + i * p.JX} y1={oy + i * p.JY}
+                      x2={ox + i * p.JX + size * p.IX} y2={oy + i * p.JY + size * p.IY}
+                      stroke={strokeColor} strokeWidth={isBold ? 1.2 : 0.4} opacity={0.5}
+                    />
+                    <line
+                      x1={ox + i * p.IX} y1={oy + i * p.IY}
+                      x2={ox + i * p.IX + size * p.JX} y2={oy + i * p.IY + size * p.JY}
+                      stroke={strokeColor} strokeWidth={isBold ? 1.2 : 0.4} opacity={0.5}
+                    />
                   </g>
                 );
               })}
 
               {/* Layer label */}
-              {(() => {
-                const [cx, cy] = cellCenter(layer, 1.5, 1.5);
-                return (
-                  <text
-                    x={cx}
-                    y={cy + 1}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize={isActive ? 11 : 9}
-                    fontWeight={isActive ? 'bold' : 'normal'}
-                    fill={isActive ? LAYER_COLORS[layer] : '#888'}
-                    style={{ pointerEvents: 'none', userSelect: 'none' }}
-                  >
-                    L{layer + 1}
-                  </text>
-                );
-              })()}
+              <text
+                x={cx} y={cy + 1}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize={isActive ? Math.max(8, p.IX - 2) : Math.max(7, p.IX - 4)}
+                fontWeight={isActive ? 'bold' : 'normal'}
+                fill={isActive ? LAYER_COLORS[layer % LAYER_COLORS.length] : '#999'}
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                L{layer + 1}
+              </text>
             </g>
           );
         })}

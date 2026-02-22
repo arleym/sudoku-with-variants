@@ -34,6 +34,7 @@ export function GameControls({
 }: GameControlsProps) {
   return (
     <div className={styles.controls}>
+      {/* Row 1: Undo/Redo, Reset, New Game */}
       <div className={styles.row}>
         <div className={styles.halfButtons}>
           <button
@@ -61,25 +62,9 @@ export function GameControls({
         <Button onClick={onNewGame} size="small" variant="primary">
           New Game
         </Button>
-        <div className={styles.halfButtons}>
-          <button
-            className={styles.iconButton}
-            onClick={onShare}
-            title="Share puzzle"
-            aria-label="Share"
-          >
-            &#x1F517;
-          </button>
-          <button
-            className={styles.iconButton}
-            onClick={onSettings}
-            title="Settings"
-            aria-label="Settings"
-          >
-            &#x2699;
-          </button>
-        </div>
       </div>
+
+      {/* Row 2: Pencil, Clear, Share, Settings */}
       <div className={styles.row}>
         <button
           className={`${styles.controlButton} ${isPencilMode ? styles.active : ''}`}
@@ -97,6 +82,22 @@ export function GameControls({
           title="Clear cell (Delete)"
         >
           Clear
+        </button>
+        <button
+          className={styles.iconButton}
+          onClick={onShare}
+          title="Share puzzle"
+          aria-label="Share"
+        >
+          &#x1F517;
+        </button>
+        <button
+          className={styles.iconButton}
+          onClick={onSettings}
+          title="Settings"
+          aria-label="Settings"
+        >
+          &#x2699;
         </button>
       </div>
     </div>
