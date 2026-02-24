@@ -187,6 +187,7 @@ function App() {
 
       <PrintView2D
         size={state.puzzle.size}
+        difficulty={state.puzzle.difficulty}
         puzzleCells={state.puzzle.cells}
         userValues={state.userValues}
         pencilMarks={state.pencilMarks}

@@ -164,6 +164,22 @@ button {
     text-align: center;
   }
 
+  /* Puzzle type + difficulty appended inline — not bold */
+  .print-layer-meta {
+    font-weight: normal;
+    font-size: 11pt;
+    color: #444;
+  }
+
+  /* Stand-alone title for 2D print */
+  .print2d-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 13pt;
+    color: #444;
+    margin-bottom: 0.12in;
+    text-align: center;
+  }
+
   .print-grid {
     display: grid;
     border: 2.5px solid #000;

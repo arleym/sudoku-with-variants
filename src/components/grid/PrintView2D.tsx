@@ -13,12 +13,13 @@ const PENCIL_FONT_PT: Record<GridSize, string> = { 4: '7pt', 9: '5pt', 16: '4pt'
 
 interface PrintView2DProps {
   size: GridSize;
+  difficulty: string;
   puzzleCells: (number | null)[];
   userValues: (number | null)[];
   pencilMarks: Set<number>[];
 }
 
-export function PrintView2D({ size, puzzleCells, userValues, pencilMarks }: PrintView2DProps) {
+export function PrintView2D({ size, difficulty, puzzleCells, userValues, pencilMarks }: PrintView2DProps) {
   const config = getGridConfig(size);
   const { boxConfig } = config;
   const totalCells = size * size;
@@ -37,9 +38,12 @@ export function PrintView2D({ size, puzzleCells, userValues, pencilMarks }: Prin
         }))
       : [];
 
+  const puzzleLabel = `${size}×${size} · ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+
   return (
     <div className="print2d-root">
       <div className="print2d-page">
+        <div className="print2d-title">{puzzleLabel}</div>
         <div
           className="print-grid"
           style={{

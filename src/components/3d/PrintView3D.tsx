@@ -13,12 +13,13 @@ interface PrintGridProps {
   size: number;
   layer: number;
   depth: number;
+  difficulty: string;
   puzzleCells: (number | null)[];
   userValues: (number | null)[];
   pencilMarks: Set<number>[];
 }
 
-function PrintGrid({ size, layer, depth, puzzleCells, userValues, pencilMarks }: PrintGridProps) {
+function PrintGrid({ size, layer, depth, difficulty, puzzleCells, userValues, pencilMarks }: PrintGridProps) {
   const layerSize = size * size;
   const boxSize = Math.sqrt(size);
 
@@ -27,9 +28,14 @@ function PrintGrid({ size, layer, depth, puzzleCells, userValues, pencilMarks }:
   const fontSize = size === 4 ? '22pt' : '14pt';
   const pencilFontSize = size === 4 ? '7pt' : '5pt';
 
+  const puzzleLabel = `${size}×${size}×${depth} · ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+
   return (
     <div className="print-layer-block">
-      <div className="print-layer-title">{getLayerLabel(layer, depth)}</div>
+      <div className="print-layer-title">
+        {getLayerLabel(layer, depth)}
+        <span className="print-layer-meta"> · {puzzleLabel}</span>
+      </div>
       <div
         className="print-grid"
         style={{
@@ -94,6 +100,7 @@ function PrintGrid({ size, layer, depth, puzzleCells, userValues, pencilMarks }:
 interface PrintView3DProps {
   size: number;
   depth: number;
+  difficulty: string;
   puzzleCells: (number | null)[];
   userValues: (number | null)[];
   pencilMarks: Set<number>[];
@@ -102,6 +109,7 @@ interface PrintView3DProps {
 export function PrintView3D({
   size,
   depth,
+  difficulty,
   puzzleCells,
   userValues,
   pencilMarks,
@@ -119,6 +127,7 @@ export function PrintView3D({
               size={size}
               layer={layer}
               depth={depth}
+              difficulty={difficulty}
               puzzleCells={puzzleCells}
               userValues={userValues}
               pencilMarks={pencilMarks}
@@ -138,6 +147,7 @@ export function PrintView3D({
             size={size}
             layer={layer}
             depth={depth}
+            difficulty={difficulty}
             puzzleCells={puzzleCells}
             userValues={userValues}
             pencilMarks={pencilMarks}

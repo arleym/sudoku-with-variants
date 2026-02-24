@@ -171,6 +171,7 @@ function App3D() {
       <PrintView3D
         size={state.puzzle.size}
         depth={state.puzzle.depth}
+        difficulty={state.puzzle.difficulty}
         puzzleCells={state.puzzle.cells}
         userValues={state.userValues}
         pencilMarks={state.pencilMarks}
