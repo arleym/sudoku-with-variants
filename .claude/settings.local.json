@@ -6,7 +6,8 @@
       "Bash(curl:*)",
       "Bash(convert:*)",
       "Bash(ls:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(tail:*)"
     ]
   }
 }

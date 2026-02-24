@@ -10,6 +10,7 @@ interface GameControlsProps {
   onSettings: () => void;
   onClear: () => void;
   onTogglePencilMode: () => void;
+  onPrint: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isPencilMode: boolean;
@@ -26,6 +27,7 @@ export function GameControls({
   onSettings,
   onClear,
   onTogglePencilMode,
+  onPrint,
   canUndo,
   canRedo,
   isPencilMode,
@@ -82,6 +84,14 @@ export function GameControls({
           title="Clear cell (Delete)"
         >
           Clear
+        </button>
+        <button
+          className={styles.iconButton}
+          onClick={onPrint}
+          title="Print puzzle"
+          aria-label="Print"
+        >
+          &#x1F5B6;
         </button>
         <button
           className={styles.iconButton}

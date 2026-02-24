@@ -5,6 +5,7 @@ import { useKeyboard3DInput } from './hooks/useKeyboard3DInput';
 import { IsometricCube } from './components/3d/IsometricCube';
 import { ActiveLayerGrid } from './components/3d/ActiveLayerGrid';
 import { LayerNav } from './components/3d/LayerNav';
+import { PrintView3D } from './components/3d/PrintView3D';
 import { NumberPad } from './components/ui/NumberPad';
 import { Button } from './components/ui/Button';
 import { Modal } from './components/ui/Modal';
@@ -111,7 +112,7 @@ function App3D() {
 
   return (
     <div className={styles.app}>
-      <main className={styles.main}>
+      <main className={styles.main} data-print-hide>
         <IsometricCube
           size={state.puzzle.size}
           depth={state.puzzle.depth}
@@ -162,9 +163,18 @@ function App3D() {
             <Button onClick={handleClear} disabled={state.selectedCell === null || isSelectedGiven} size="small">
               Clear
             </Button>
+            <Button onClick={() => window.print()} size="small">Print</Button>
           </div>
         </div>
       </main>
+
+      <PrintView3D
+        size={state.puzzle.size}
+        depth={state.puzzle.depth}
+        puzzleCells={state.puzzle.cells}
+        userValues={state.userValues}
+        pencilMarks={state.pencilMarks}
+      />
 
       {/* New Game Modal */}
       <Modal isOpen={showNewGameModal} onClose={() => setShowNewGameModal(false)} title="New Game">

@@ -5,6 +5,7 @@ import { useSettings } from './hooks/useSettings';
 import { useKeyboardInput } from './hooks/useKeyboardInput';
 import { usePuzzleFromUrl } from './hooks/usePuzzleFromUrl';
 import { SudokuGrid } from './components/grid/SudokuGrid';
+import { PrintView2D } from './components/grid/PrintView2D';
 import { NumberPad } from './components/ui/NumberPad';
 import { GameControls } from './components/game/GameControls';
 import { HintPanel } from './components/game/HintPanel';
@@ -133,7 +134,7 @@ function App() {
 
   return (
     <div className={styles.app}>
-      <main className={styles.main}>
+      <main className={styles.main} data-print-hide>
         <SudokuGrid
           size={state.puzzle.size}
           puzzleCells={state.puzzle.cells}
@@ -172,6 +173,7 @@ function App() {
           onSettings={() => setShowSettingsModal(true)}
           onClear={handleClear}
           onTogglePencilMode={togglePencilMode}
+          onPrint={() => window.print()}
           canUndo={canUndo}
           canRedo={canRedo}
           isPencilMode={state.isPencilMode}
@@ -182,6 +184,13 @@ function App() {
           }
         />
       </main>
+
+      <PrintView2D
+        size={state.puzzle.size}
+        puzzleCells={state.puzzle.cells}
+        userValues={state.userValues}
+        pencilMarks={state.pencilMarks}
+      />
 
       {/* New Game Modal */}
       <Modal
