@@ -8,7 +8,6 @@
 .grid {
   display: grid;
   width: var(--grid-size);
-  height: var(--grid-size);
   border: 3px solid var(--grid-border, #333);
   background: var(--grid-bg, #fff);
   box-sizing: content-box;
