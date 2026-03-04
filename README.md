@@ -3,6 +3,9 @@
 - npm run build, then SFTP the dist folder
 - printable version is there
 
+## Todo
+- Timer? 
+- Dark mode? 
 
 
 # React + TypeScript + Vite
