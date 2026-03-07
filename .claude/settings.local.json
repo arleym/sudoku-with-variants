@@ -7,7 +7,10 @@
       "Bash(convert:*)",
       "Bash(ls:*)",
       "Bash(pkill:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

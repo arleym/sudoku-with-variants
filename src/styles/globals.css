@@ -52,35 +52,172 @@
   --toggle-on-bg: #4a90d9;
 }
 
-/* Dark mode (optional - can be enabled later) */
-@media (prefers-color-scheme: dark) {
-  :root.dark-mode {
-    --text-color: #e0e0e0;
-    --text-muted: #999;
-    --given-color: #fff;
-    --bg-color: #1a1a1a;
-    --card-bg: #2a2a2a;
-    --modal-bg: #2a2a2a;
-    --grid-bg: #2a2a2a;
-    --grid-border: #555;
-    --box-border: #555;
-    --cell-bg: #333;
-    --cell-border: #444;
-    --cell-hover-bg: #3a3a3a;
-    --cell-selected-bg: #1e3a5f;
-    --cell-highlighted-bg: #5c4b00;
-    --cell-related-bg: #1e3040;
-    --cell-error-bg: #5c1a1a;
-    --pencil-color: #999;
-    --button-bg: #3a3a3a;
-    --button-hover-bg: #4a4a4a;
-    --button-border: #555;
-    --button-color: #e0e0e0;
-    --input-bg: #333;
-    --input-border: #444;
-    --border-color: #444;
-    --toggle-off-bg: #555;
-  }
+/* Dark theme */
+[data-theme="dark"] {
+  --primary-color: #5a9ee6;
+  --primary-hover: #4a8ed6;
+  --danger-color: #e85d6c;
+  --danger-hover: #d84a5a;
+  --text-color: #e0e0e0;
+  --text-muted: #999;
+  --given-color: #fff;
+  --bg-color: #1a1a1a;
+  --card-bg: #2a2a2a;
+  --modal-bg: #2a2a2a;
+  --grid-bg: #2a2a2a;
+  --grid-border: #888;
+  --box-border: #888;
+  --cell-bg: #333;
+  --cell-border: #444;
+  --cell-hover-bg: #3a3a3a;
+  --cell-selected-bg: #1e3a5f;
+  --cell-highlighted-bg: #5c4b00;
+  --cell-related-bg: #1e3040;
+  --cell-error-bg: #5c1a1a;
+  --pencil-color: #999;
+  --button-bg: #3a3a3a;
+  --button-hover-bg: #4a4a4a;
+  --button-border: #555;
+  --button-color: #e0e0e0;
+  --button-active-bg: #5a9ee6;
+  --button-active-color: #fff;
+  --button-active-border: #4a8ed6;
+  --input-bg: #333;
+  --input-border: #444;
+  --border-color: #444;
+  --focus-color: #5a9ee6;
+  --hint-bg: #3d3520;
+  --hint-border: #8a7020;
+  --toggle-off-bg: #555;
+  --toggle-on-bg: #5a9ee6;
+  --success-bg: #1b3a1b;
+  --success-text: #6abf6a;
+}
+
+/* Autumn Dark theme (warm browns) */
+[data-theme="autumn-dark"] {
+  --primary-color: #c87533;
+  --primary-hover: #b5652a;
+  --danger-color: #c44040;
+  --danger-hover: #a83030;
+  --text-color: #e8ddd0;
+  --text-muted: #a89480;
+  --given-color: #f5ebe0;
+  --bg-color: #1c1410;
+  --card-bg: #2a1f18;
+  --modal-bg: #2a1f18;
+  --grid-bg: #2a1f18;
+  --grid-border: #7a6050;
+  --box-border: #7a6050;
+  --cell-bg: #332820;
+  --cell-border: #4a3828;
+  --cell-hover-bg: #3d3028;
+  --cell-selected-bg: #4a3520;
+  --cell-highlighted-bg: #4a3a18;
+  --cell-related-bg: #3a2e22;
+  --cell-error-bg: #4a2020;
+  --pencil-color: #a89480;
+  --button-bg: #3a2e22;
+  --button-hover-bg: #4a3828;
+  --button-border: #5a4838;
+  --button-color: #e8ddd0;
+  --button-active-bg: #c87533;
+  --button-active-color: #fff;
+  --button-active-border: #b5652a;
+  --input-bg: #332820;
+  --input-border: #4a3828;
+  --border-color: #4a3828;
+  --focus-color: #c87533;
+  --hint-bg: #3a3018;
+  --hint-border: #8a7020;
+  --toggle-off-bg: #5a4838;
+  --toggle-on-bg: #c87533;
+  --success-bg: #2a3018;
+  --success-text: #8aaa50;
+}
+
+/* Autumn Light theme (warm beige) */
+[data-theme="autumn-light"] {
+  --primary-color: #b5652a;
+  --primary-hover: #a05520;
+  --danger-color: #c44040;
+  --danger-hover: #a83030;
+  --text-color: #4a3520;
+  --text-muted: #7a6050;
+  --given-color: #2a1a10;
+  --bg-color: #f5ebe0;
+  --card-bg: #faf5ee;
+  --modal-bg: #faf5ee;
+  --grid-bg: #faf5ee;
+  --grid-border: #8a7060;
+  --box-border: #8a7060;
+  --cell-bg: #fff8f0;
+  --cell-border: #ddd0c0;
+  --cell-hover-bg: #f0e4d4;
+  --cell-selected-bg: #e8d0b0;
+  --cell-highlighted-bg: #f0dca0;
+  --cell-related-bg: #f0e8d8;
+  --cell-error-bg: #f0c0b0;
+  --pencil-color: #8a7060;
+  --button-bg: #f0e4d4;
+  --button-hover-bg: #e8d8c4;
+  --button-border: #d0c0a8;
+  --button-color: #4a3520;
+  --button-active-bg: #b5652a;
+  --button-active-color: #fff;
+  --button-active-border: #a05520;
+  --input-bg: #faf5ee;
+  --input-border: #ddd0c0;
+  --border-color: #ddd0c0;
+  --focus-color: #b5652a;
+  --hint-bg: #f5e8c0;
+  --hint-border: #c8a840;
+  --toggle-off-bg: #ccc0a8;
+  --toggle-on-bg: #b5652a;
+  --success-bg: #e0ecc8;
+  --success-text: #5a7030;
+}
+
+/* Nord theme (arctic navy) */
+[data-theme="nord"] {
+  --primary-color: #88c0d0;
+  --primary-hover: #7bb5c5;
+  --danger-color: #bf616a;
+  --danger-hover: #a9545c;
+  --text-color: #d8dee9;
+  --text-muted: #81a1c1;
+  --given-color: #eceff4;
+  --bg-color: #2e3440;
+  --card-bg: #3b4252;
+  --modal-bg: #3b4252;
+  --grid-bg: #3b4252;
+  --grid-border: #81a1c1;
+  --box-border: #81a1c1;
+  --cell-bg: #434c5e;
+  --cell-border: #4c566a;
+  --cell-hover-bg: #4c566a;
+  --cell-selected-bg: #5e81ac;
+  --cell-highlighted-bg: #a3be8c33;
+  --cell-related-bg: #434c5e;
+  --cell-error-bg: #bf616a33;
+  --pencil-color: #81a1c1;
+  --button-bg: #434c5e;
+  --button-hover-bg: #4c566a;
+  --button-border: #4c566a;
+  --button-color: #d8dee9;
+  --button-active-bg: #5e81ac;
+  --button-active-color: #eceff4;
+  --button-active-border: #81a1c1;
+  --input-bg: #434c5e;
+  --input-border: #4c566a;
+  --border-color: #4c566a;
+  --focus-color: #88c0d0;
+  --hint-bg: #a3be8c22;
+  --hint-border: #a3be8c;
+  --toggle-off-bg: #4c566a;
+  --toggle-on-bg: #88c0d0;
+  --success-bg: #a3be8c22;
+  --success-text: #a3be8c;
 }
 
 /* Reset */

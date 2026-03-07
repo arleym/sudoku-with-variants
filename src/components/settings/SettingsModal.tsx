@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Toggle } from '../ui/Toggle';
-import type { GameSettings } from '../../types/settings';
+import type { GameSettings, ColorMode } from '../../types/settings';
 import { APP_VERSION } from '../../constants/version';
 import styles from './SettingsModal.module.css';
 
@@ -10,6 +10,7 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: GameSettings;
   onToggle: (key: keyof GameSettings) => void;
+  onColorModeChange: (mode: ColorMode) => void;
 }
 
 const SETTINGS_CONFIG: {
@@ -59,24 +60,46 @@ const SETTINGS_CONFIG: {
   },
 ];
 
-type Tab = 'settings' | 'info';
+const COLOR_MODES: { value: ColorMode; label: string; description: string }[] = [
+  { value: 'light', label: 'Light', description: 'Clean light theme' },
+  { value: 'dark', label: 'Dark', description: 'Easy on the eyes' },
+  { value: 'system', label: 'System', description: 'Match your device setting' },
+  { value: 'autumn-light', label: 'Autumn Light', description: 'Warm beige and earth tones' },
+  { value: 'autumn-dark', label: 'Autumn Dark', description: 'Rich browns and amber' },
+  { value: 'nord', label: 'Nord', description: 'Arctic navy color palette' },
+];
+
+type Tab = 'settings' | 'appearance' | 'info';
+
+const TAB_TITLES: Record<Tab, string> = {
+  settings: 'Settings',
+  appearance: 'Appearance',
+  info: 'Info',
+};
 
 export function SettingsModal({
   isOpen,
   onClose,
   settings,
   onToggle,
+  onColorModeChange,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('settings');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={activeTab === 'settings' ? 'Settings' : 'Info'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={TAB_TITLES[activeTab]}>
       <div className={styles.tabs}>
         <button
           className={`${styles.tab} ${activeTab === 'settings' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('settings')}
         >
           Settings
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'appearance' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('appearance')}
+        >
+          Appearance
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'info' ? styles.activeTab : ''}`}
@@ -93,11 +116,27 @@ export function SettingsModal({
               <Toggle
                 id={`setting-${key}`}
                 label={label}
-                checked={settings[key]}
+                checked={settings[key] as boolean}
                 onChange={() => onToggle(key)}
               />
               <p className={styles.description}>{description}</p>
             </div>
+          ))}
+        </div>
+      ) : activeTab === 'appearance' ? (
+        <div className={styles.colorModes}>
+          {COLOR_MODES.map(({ value, label, description }) => (
+            <button
+              key={value}
+              className={`${styles.colorModeOption} ${settings.colorMode === value ? styles.colorModeActive : ''}`}
+              onClick={() => onColorModeChange(value)}
+            >
+              <div className={`${styles.colorModePreview} ${styles[`preview_${value}`]}`} />
+              <div className={styles.colorModeInfo}>
+                <span className={styles.colorModeLabel}>{label}</span>
+                <span className={styles.colorModeDesc}>{description}</span>
+              </div>
+            </button>
           ))}
         </div>
       ) : (

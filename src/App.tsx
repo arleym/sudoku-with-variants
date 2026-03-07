@@ -35,7 +35,7 @@ function App() {
     canRedo,
   } = useGameState();
 
-  const { settings, toggleSetting } = useSettings();
+  const { settings, toggleSetting, setColorMode } = useSettings();
 
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -217,6 +217,7 @@ function App() {
         onClose={() => setShowSettingsModal(false)}
         settings={settings}
         onToggle={toggleSetting}
+        onColorModeChange={setColorMode}
       />
 
       {/* Share Modal */}
