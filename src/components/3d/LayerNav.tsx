@@ -1,12 +1,14 @@
 import styles from './LayerNav.module.css';
 
 interface LayerNavProps {
-  depth: number;          // number of layers (4 or 9)
+  depth: number;
   activeLayer: number;
   onChangeLayer: (layer: number) => void;
+  showCube: boolean;
+  onToggleCube: () => void;
 }
 
-export function LayerNav({ depth, activeLayer, onChangeLayer }: LayerNavProps) {
+export function LayerNav({ depth, activeLayer, onChangeLayer, showCube, onToggleCube }: LayerNavProps) {
   return (
     <div className={styles.nav}>
       <button
@@ -19,7 +21,15 @@ export function LayerNav({ depth, activeLayer, onChangeLayer }: LayerNavProps) {
       </button>
 
       <div className={styles.info}>
-        <span className={styles.label}>Layer {activeLayer + 1} / {depth}</span>
+        <button
+          className={styles.layerToggle}
+          onClick={onToggleCube}
+          aria-label={showCube ? 'Hide 3D overview' : 'Show 3D overview'}
+          title={showCube ? 'Hide 3D overview' : 'Show 3D overview'}
+        >
+          <span className={styles.label}>Layer {activeLayer + 1} / {depth}</span>
+          <span className={styles.toggleHint}>{showCube ? '▲' : '▼'}</span>
+        </button>
         <div className={`${styles.dots} ${depth > 4 ? styles.dotsSmall : ''}`}>
           {Array.from({ length: depth }, (_, i) => (
             <button

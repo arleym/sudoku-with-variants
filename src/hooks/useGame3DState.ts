@@ -243,7 +243,7 @@ export function useGame3DState() {
   const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
   const resetPuzzle = useCallback(() => dispatch({ type: 'RESET_PUZZLE' }), []);
 
-  const newPuzzle = useCallback((size: 4 | 9, difficulty: Difficulty) => {
+  const newPuzzle = useCallback((size: 4 | 9 | 16, difficulty: Difficulty) => {
     const puzzle = generatePuzzle3D(size, difficulty);
     dispatch({ type: 'NEW_PUZZLE', puzzle });
   }, []);

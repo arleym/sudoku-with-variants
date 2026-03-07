@@ -128,9 +128,46 @@ function generate9x9x9(difficulty: Difficulty): Puzzle3D {
   return { id: generateId(), size: 9, depth: 9, difficulty, cells: puzzle, solution };
 }
 
+// ─── 16×16×16 (cyclic-shift construction, same strategy as 9×9×9) ────────────
+
+const CLUE_TARGETS_16: Record<Difficulty, number> = {
+  easy:   2800,
+  medium: 2200,
+  hard:   1700,
+  expert: 1300,
+};
+
+function generate16x16x16Solution(): number[] {
+  const base2D: (number | null)[] = new Array(256).fill(null);
+  const result = solveWithRandomization(base2D, 16);
+  if (!result.solved || !result.solution) throw new Error('Failed to generate 16×16 base layer');
+  const base = result.solution;
+
+  const solution = new Array<number>(4096);
+  for (let d = 0; d < 16; d++) {
+    for (let i = 0; i < 256; i++) {
+      solution[d * 256 + i] = ((base[i] - 1 + d) % 16) + 1;
+    }
+  }
+  return solution;
+}
+
+function generate16x16x16(difficulty: Difficulty): Puzzle3D {
+  const solution = generate16x16x16Solution();
+  const targetClues = CLUE_TARGETS_16[difficulty];
+  const cellsToRemove = 4096 - targetClues;
+
+  const puzzle: (number | null)[] = [...solution];
+  const indices = shuffle(Array.from({ length: 4096 }, (_, i) => i));
+  for (let i = 0; i < cellsToRemove; i++) puzzle[indices[i]] = null;
+
+  return { id: generateId(), size: 16, depth: 16, difficulty, cells: puzzle, solution };
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-export function generatePuzzle3D(size: 4 | 9, difficulty: Difficulty): Puzzle3D {
+export function generatePuzzle3D(size: 4 | 9 | 16, difficulty: Difficulty): Puzzle3D {
+  if (size === 16) return generate16x16x16(difficulty);
   if (size === 9) return generate9x9x9(difficulty);
   return generate4x4x4(difficulty);
 }

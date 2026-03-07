@@ -13,6 +13,22 @@
   align-items: stretch;
 }
 
+.confirmContent {
+  text-align: center;
+}
+
+.confirmContent p {
+  margin: 0 0 1.25rem;
+  font-size: 1rem;
+  color: var(--text-color, #333);
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
 @media print {
   .controls {
     display: none;

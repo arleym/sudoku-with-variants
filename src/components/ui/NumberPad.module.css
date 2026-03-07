@@ -18,26 +18,26 @@
   min-height: 48px;
   font-size: 1.25rem;
   font-weight: bold;
-  border: 2px solid var(--number-border, #ccc);
+  border: 2px solid var(--button-border, #ccc);
   border-radius: 8px;
-  background: var(--number-bg, #fff);
-  color: var(--number-color, #333);
+  background: var(--button-bg, #fff);
+  color: var(--button-color, #333);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .numberButton:hover:not(:disabled) {
-  background: var(--number-hover-bg, #e3f2fd);
-  border-color: var(--number-hover-border, #4a90d9);
+  background: var(--button-hover-bg, #e3f2fd);
+  border-color: var(--focus-color, #4a90d9);
 }
 
 .numberButton:active:not(:disabled) {
-  background: var(--number-active-bg, #bbdefb);
+  background: var(--cell-selected-bg, #bbdefb);
   transform: scale(0.95);
 }
 
 .numberButton:disabled {
-  opacity: 0.5;
+  color: var(--button-disabled-color, #999);
   cursor: not-allowed;
 }
 

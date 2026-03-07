@@ -10,7 +10,9 @@
       "Bash(tail:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx cap:*)"
     ]
   }
 }

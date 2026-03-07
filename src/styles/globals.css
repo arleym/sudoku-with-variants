@@ -48,6 +48,7 @@
   --focus-color: #4a90d9;
   --hint-bg: #fff9c4;
   --hint-border: #fbc02d;
+  --button-disabled-color: #999;
   --toggle-off-bg: #ccc;
   --toggle-on-bg: #4a90d9;
 }
@@ -88,6 +89,11 @@
   --focus-color: #5a9ee6;
   --hint-bg: #3d3520;
   --hint-border: #8a7020;
+  --secondary-bg: #3a3a3a;
+  --secondary-color: #e0e0e0;
+  --secondary-border: #555;
+  --secondary-hover-bg: #4a4a4a;
+  --button-disabled-color: #aaa;
   --toggle-off-bg: #555;
   --toggle-on-bg: #5a9ee6;
   --success-bg: #1b3a1b;
@@ -130,6 +136,11 @@
   --focus-color: #c87533;
   --hint-bg: #3a3018;
   --hint-border: #8a7020;
+  --secondary-bg: #3a2e22;
+  --secondary-color: #e8ddd0;
+  --secondary-border: #5a4838;
+  --secondary-hover-bg: #4a3828;
+  --button-disabled-color: #b8a890;
   --toggle-off-bg: #5a4838;
   --toggle-on-bg: #c87533;
   --success-bg: #2a3018;
@@ -172,6 +183,7 @@
   --focus-color: #b5652a;
   --hint-bg: #f5e8c0;
   --hint-border: #c8a840;
+  --button-disabled-color: #9a8878;
   --toggle-off-bg: #ccc0a8;
   --toggle-on-bg: #b5652a;
   --success-bg: #e0ecc8;
@@ -214,6 +226,11 @@
   --focus-color: #88c0d0;
   --hint-bg: #a3be8c22;
   --hint-border: #a3be8c;
+  --secondary-bg: #434c5e;
+  --secondary-color: #d8dee9;
+  --secondary-border: #4c566a;
+  --secondary-hover-bg: #4c566a;
+  --button-disabled-color: #8899aa;
   --toggle-off-bg: #4c566a;
   --toggle-on-bg: #88c0d0;
   --success-bg: #a3be8c22;
@@ -235,11 +252,14 @@ html {
 
 body {
   margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background: var(--bg-color);
   color: var(--text-color);
   line-height: 1.5;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 button {

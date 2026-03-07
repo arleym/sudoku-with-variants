@@ -20,6 +20,27 @@
   color: var(--text-color);
 }
 
+.layerToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.layerToggle:hover {
+  background: var(--button-hover-bg);
+}
+
+.toggleHint {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
 .dots {
   display: flex;
   gap: 8px;

@@ -2,11 +2,11 @@ import type { Difficulty } from './puzzle';
 
 export interface Puzzle3D {
   id: string;
-  size: number;        // 4
-  depth: number;       // 4
+  size: number;        // 4, 9, or 16
+  depth: number;       // same as size (NxNxN)
   difficulty: Difficulty;
-  cells: (number | null)[];  // length 64, flat index = depth * 16 + row * 4 + col
-  solution: number[];        // length 64
+  cells: (number | null)[];  // flat index = layer * size² + row * size + col
+  solution: number[];
 }
 
 export interface Game3DState {

@@ -26,11 +26,9 @@
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
   width: min(80vw, 340px);
-  height: min(80vw, 340px);
   border: 2px solid var(--box-border, #333);
   background: var(--grid-bg, #fff);
   border-radius: 4px;
-  overflow: hidden;
 }
 
 .cell {
@@ -43,8 +41,10 @@
   user-select: none;
   transition: background-color 0.15s ease;
   position: relative;
-  font-size: clamp(1.2rem, 8vw, 2rem);
+  font-size: inherit;
   box-sizing: border-box;
+  min-height: 1.5em;
+  padding: 2px;
 }
 
 .cell:hover {

@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import styles from './NewGameModal.module.css';
 
 export type GameMode = '2d' | '3d';
-export type Size3D = 4 | 9;
+export type Size3D = 4 | 9 | 16;
 
 const PENDING_KEY = 'sudoku-pending-new-game';
 
@@ -39,8 +39,9 @@ const SIZES_2D: { value: GridSize; label: string }[] = [
 ];
 
 const SIZES_3D: { value: Size3D; label: string }[] = [
-  { value: 4, label: '4×4×4' },
-  { value: 9, label: '9×9×9' },
+  { value: 4, label: '4³' },
+  { value: 9, label: '9³' },
+  { value: 16, label: '16³' },
 ];
 
 const DIFFICULTIES: { value: Difficulty; label: string }[] = [

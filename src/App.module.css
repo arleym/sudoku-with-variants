@@ -4,28 +4,6 @@
   flex-direction: column;
 }
 
-
-.header {
-  text-align: center;
-  padding: 1rem;
-  background: var(--card-bg, #fff);
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
-}
-
-.title {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-color, #333);
-}
-
-.puzzleInfo {
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--text-muted, #666);
-  text-transform: capitalize;
-}
-
 .main {
   flex: 1;
   display: flex;
@@ -63,23 +41,9 @@
   justify-content: center;
 }
 
-@media (max-width: 600px) {
-  .header {
-    padding: 0.75rem;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-}
-
 @media print {
   .app {
     min-height: auto;
-  }
-
-  .header {
-    display: none;
   }
 
   .main {

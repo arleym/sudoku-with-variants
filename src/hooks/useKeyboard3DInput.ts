@@ -88,13 +88,27 @@ export function useKeyboard3DInput({
 
       const flatIndex = activeLayer * layerSize + selectedCell;
 
-      // Number input 1–size
+      // Number input 1–9
       const num = parseInt(e.key);
       if (!isNaN(num) && num >= 1 && num <= size) {
         if (isGivenCell(flatIndex)) return;
         if (isPencilMode) onTogglePencilMark(flatIndex, num);
         else onSetValue(flatIndex, num);
         return;
+      }
+
+      // Letter input A-G for values 10-16 (when size > 9)
+      if (size > 9) {
+        const upper = e.key.toUpperCase();
+        if (upper >= 'A' && upper <= 'Z') {
+          const letterVal = upper.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+          if (letterVal >= 10 && letterVal <= size) {
+            if (isGivenCell(flatIndex)) return;
+            if (isPencilMode) onTogglePencilMark(flatIndex, letterVal);
+            else onSetValue(flatIndex, letterVal);
+            return;
+          }
+        }
       }
 
       // Clear

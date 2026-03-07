@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Toggle } from '../ui/Toggle';
 import type { GameSettings, ColorMode } from '../../types/settings';
 import { APP_VERSION } from '../../constants/version';
 import styles from './SettingsModal.module.css';
+
+export type SettingsTab = 'settings' | 'appearance' | 'info';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface SettingsModalProps {
   settings: GameSettings;
   onToggle: (key: keyof GameSettings) => void;
   onColorModeChange: (mode: ColorMode) => void;
+  initialTab?: SettingsTab;
 }
 
 const SETTINGS_CONFIG: {
@@ -69,7 +72,7 @@ const COLOR_MODES: { value: ColorMode; label: string; description: string }[] = 
   { value: 'nord', label: 'Nord', description: 'Arctic navy color palette' },
 ];
 
-type Tab = 'settings' | 'appearance' | 'info';
+type Tab = SettingsTab;
 
 const TAB_TITLES: Record<Tab, string> = {
   settings: 'Settings',
@@ -83,8 +86,14 @@ export function SettingsModal({
   settings,
   onToggle,
   onColorModeChange,
+  initialTab = 'settings',
 }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('settings');
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+
+  // Sync tab when initialTab changes (e.g. opened from menu)
+  useEffect(() => {
+    if (isOpen) setActiveTab(initialTab);
+  }, [isOpen, initialTab]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={TAB_TITLES[activeTab]}>

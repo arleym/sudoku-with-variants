@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { getAllConflicts3D, getRelatedIndices3D } from '../../lib/puzzle3d/validator3d';
+import { displayValue } from '../../constants/grid-configs';
+import type { GridSize } from '../../types/puzzle';
 import styles from './ActiveLayerGrid.module.css';
 
 interface ActiveLayerGridProps {
@@ -46,10 +48,10 @@ export function ActiveLayerGrid({
     return set;
   }, [selectedValue, allValues]);
 
-  // Max grid size in px — slightly larger for 9×9
-  const gridPx = size === 9 ? 'min(88vw, 400px)' : 'min(80vw, 340px)';
+  // Max grid size in px — scale by grid size
+  const gridPx = size === 16 ? 'min(95vw, 520px)' : size === 9 ? 'min(88vw, 400px)' : 'min(80vw, 340px)';
   // Font size for cell values
-  const fontSize = size === 9 ? 'clamp(0.85rem, 5vw, 1.4rem)' : 'clamp(1.2rem, 8vw, 2rem)';
+  const fontSize = size === 16 ? '1em' : size === 9 ? 'clamp(0.85rem, 5vw, 1.4rem)' : 'clamp(1.2rem, 8vw, 1rem)';
 
   return (
     <div className={styles.wrapper} key={`layer-${activeLayer}-${size}`}>
@@ -59,7 +61,6 @@ export function ActiveLayerGrid({
           gridTemplateColumns: `repeat(${size}, 1fr)`,
           gridTemplateRows: `repeat(${size}, 1fr)`,
           width: gridPx,
-          height: gridPx,
           fontSize,
         }}
         role="grid"
@@ -107,7 +108,7 @@ export function ActiveLayerGrid({
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onCellClick(i); }}
             >
               {displayVal !== null ? (
-                <span className={styles.value}>{displayVal}</span>
+                <span className={styles.value}>{displayValue(displayVal, size as GridSize)}</span>
               ) : marks.size > 0 ? (
                 <div
                   className={styles.pencil}
@@ -118,7 +119,7 @@ export function ActiveLayerGrid({
                       key={n}
                       className={`${styles.pencilMark} ${marks.has(n) ? styles.pencilVisible : ''}`}
                     >
-                      {marks.has(n) ? n : ''}
+                      {marks.has(n) ? displayValue(n, size as GridSize) : ''}
                     </span>
                   ))}
                 </div>

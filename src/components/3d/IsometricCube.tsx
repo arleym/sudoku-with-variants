@@ -9,14 +9,16 @@ interface IsometricCubeProps {
   onLayerClick: (layer: number) => void;
 }
 
-// Accent colors per layer (cycles for > 4 layers)
+// Accent colors per layer (cycles for > 9 layers)
 const LAYER_COLORS = [
   '#4a90d9', '#5ba85c', '#e07b39', '#9b59b6',
   '#e74c3c', '#1abc9c', '#f39c12', '#8e44ad', '#2980b9',
+  '#d35400', '#27ae60', '#c0392b', '#2c3e50', '#16a085', '#8e44ad', '#2ecc71',
 ];
 const LAYER_COLORS_LIGHT = [
   '#bbdefb', '#c8e6c9', '#ffe0b2', '#e1bee7',
   '#ffcdd2', '#b2dfdb', '#fff9c4', '#e8daef', '#d6eaf8',
+  '#fdebd0', '#d5f5e3', '#fadbd8', '#d5d8dc', '#d1f2eb', '#e8daef', '#d5f5e3',
 ];
 
 function getIsoParams(size: number, depth: number) {

@@ -4,7 +4,6 @@
   flex-direction: column;
 }
 
-
 .main {
   flex: 1;
   display: flex;
@@ -14,30 +13,11 @@
   padding: 8px 0 2rem;
 }
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 360px;
-  padding: 0 1rem;
-}
-
-.controlRow {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
 .generating {
   text-align: center;
   padding: 2rem;
   color: var(--text-muted, #666);
 }
-
 
 .completeContent {
   text-align: center;

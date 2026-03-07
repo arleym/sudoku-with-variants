@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 import styles from './GameControls.module.css';
 
 interface GameControlsProps {
@@ -6,11 +8,8 @@ interface GameControlsProps {
   onRedo: () => void;
   onReset: () => void;
   onNewGame: () => void;
-  onShare: () => void;
-  onSettings: () => void;
   onClear: () => void;
   onTogglePencilMode: () => void;
-  onPrint: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isPencilMode: boolean;
@@ -23,20 +22,18 @@ export function GameControls({
   onRedo,
   onReset,
   onNewGame,
-  onShare,
-  onSettings,
   onClear,
   onTogglePencilMode,
-  onPrint,
   canUndo,
   canRedo,
   isPencilMode,
   isPencilEnabled,
   isClearDisabled,
 }: GameControlsProps) {
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   return (
     <div className={styles.controls}>
-      {/* Row 1: Undo / Redo / Reset / New Game */}
       <div className={styles.row}>
         <Button onClick={onUndo} disabled={!canUndo} size="small" title="Undo (Ctrl+Z)">
           Undo
@@ -44,16 +41,6 @@ export function GameControls({
         <Button onClick={onRedo} disabled={!canRedo} size="small" title="Redo (Ctrl+Y)">
           Redo
         </Button>
-        <Button onClick={onReset} size="small" variant="danger" title="Reset puzzle">
-          Reset
-        </Button>
-        <Button onClick={onNewGame} size="small" variant="primary">
-          New Game
-        </Button>
-      </div>
-
-      {/* Row 2: Pencil / Clear / Print / Share / Settings */}
-      <div className={styles.row}>
         <Button
           onClick={onTogglePencilMode}
           disabled={!isPencilEnabled}
@@ -66,16 +53,31 @@ export function GameControls({
         <Button onClick={onClear} disabled={isClearDisabled} size="small" title="Clear cell (Delete)">
           Clear
         </Button>
-        <Button onClick={onPrint} size="small" title="Print puzzle">
-          Print
+        <Button onClick={() => setShowResetConfirm(true)} size="small" variant="danger" title="Reset puzzle">
+          Reset
         </Button>
-        <Button onClick={onShare} size="small" title="Share puzzle">
-          Share
-        </Button>
-        <Button onClick={onSettings} size="small" title="Settings">
-          Settings
+        <Button onClick={onNewGame} size="small" variant="primary">
+          New Game
         </Button>
       </div>
+
+      <Modal isOpen={showResetConfirm} onClose={() => setShowResetConfirm(false)} title="Reset Puzzle">
+        <div className={styles.confirmContent}>
+          <p>Clear all your progress and start this puzzle over?</p>
+          <div className={styles.confirmActions}>
+            <Button onClick={() => setShowResetConfirm(false)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setShowResetConfirm(false);
+                onReset();
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

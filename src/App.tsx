@@ -7,10 +7,13 @@ import { usePuzzleFromUrl } from './hooks/usePuzzleFromUrl';
 import { SudokuGrid } from './components/grid/SudokuGrid';
 import { PrintView2D } from './components/grid/PrintView2D';
 import { NumberPad } from './components/ui/NumberPad';
+import { TitleBar } from './components/ui/TitleBar';
+import type { MenuAction } from './components/ui/TitleBar';
 import { GameControls } from './components/game/GameControls';
 import { HintPanel } from './components/game/HintPanel';
 import { NewGameModal, consumePendingNewGame } from './components/game/NewGameModal';
 import { SettingsModal } from './components/settings/SettingsModal';
+import type { SettingsTab } from './components/settings/SettingsModal';
 import { ShareModal } from './components/share/ShareModal';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
@@ -39,6 +42,7 @@ function App() {
 
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('settings');
   const [showShareModal, setShowShareModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -124,6 +128,26 @@ function App() {
     [setValue, selectCell]
   );
 
+  const handleMenuAction = useCallback((action: MenuAction) => {
+    switch (action) {
+      case 'settings':
+      case 'appearance':
+      case 'info':
+        setSettingsTab(action);
+        setShowSettingsModal(true);
+        break;
+      case 'share':
+        setShowShareModal(true);
+        break;
+      case 'print':
+        window.print();
+        break;
+      case 'privacy':
+        window.open('https://eightone.ca/privacy', '_blank');
+        break;
+    }
+  }, []);
+
   if (urlLoading) {
     return (
       <div className={styles.app}>
@@ -134,6 +158,7 @@ function App() {
 
   return (
     <div className={styles.app}>
+      <TitleBar onMenuAction={handleMenuAction} />
       <main className={styles.main} data-print-hide>
         <SudokuGrid
           size={state.puzzle.size}
@@ -169,11 +194,8 @@ function App() {
           onRedo={redo}
           onReset={resetPuzzle}
           onNewGame={() => setShowNewGameModal(true)}
-          onShare={() => setShowShareModal(true)}
-          onSettings={() => setShowSettingsModal(true)}
           onClear={handleClear}
           onTogglePencilMode={togglePencilMode}
-          onPrint={() => window.print()}
           canUndo={canUndo}
           canRedo={canRedo}
           isPencilMode={state.isPencilMode}
@@ -218,6 +240,7 @@ function App() {
         settings={settings}
         onToggle={toggleSetting}
         onColorModeChange={setColorMode}
+        initialTab={settingsTab}
       />
 
       {/* Share Modal */}
