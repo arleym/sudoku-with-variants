@@ -4,8 +4,28 @@
 - printable version is there
 
 ## Todo
-- Timer? 
-- Dark mode? 
+- Timer?
+- Dark mode?
+
+## Adding Android Support
+
+Install the Android platform:
+```
+npm install @capacitor/android
+npx cap add android
+```
+
+Build and sync:
+```
+npm run build && npx cap sync android
+```
+
+Open in Android Studio:
+```
+npx cap open android
+```
+
+All existing Capacitor plugins (haptics, keyboard, status-bar) support Android out of the box. Status bar styling may need minor tweaks since Android handles it differently than iOS.
 
 
 # React + TypeScript + Vite
@@ -81,3 +101,25 @@ export default defineConfig([
   },
 ])
 ```
+
+
+
+
+
+
+
+
+
+ How do I clear cache / refresh in the iOS app? I am unfamiliar with xcode
+
+⏺ In the iOS Simulator (launched from Xcode):
+
+  Quick way: In the Simulator menu bar: Device → Erase All Content and Settings
+
+  Or just rebuild fresh:
+  npm run build && npx cap sync ios && npx cap open ios
+  Then in Xcode press Cmd+Shift+K (Clean Build Folder), then Cmd+R to run.
+
+  If you're running on a physical device, long-press the app icon → Delete App → reinstall via Xcode Run.
+
+  The Capacitor WebView caches the bundled web assets, so a fresh cap sync + clean build is the reliable way to get updated code onto the device.
