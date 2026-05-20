@@ -1,0 +1,7 @@
+# Drop a TTF font here.
+#
+# Recommended: JetBrains Mono (OFL licensed)
+#   https://www.jetbrains.com/lp/mono/  →  download →  fonts/ttf/JetBrainsMono-Regular.ttf
+#
+# The path in main.lua: assets/fonts/JetBrainsMono-Regular.ttf
+# If the file is absent, LÖVE falls back to its built-in bitmap font.

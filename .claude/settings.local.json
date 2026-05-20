@@ -12,7 +12,10 @@
       "Bash(npx vite:*)",
       "Bash(npm run:*)",
       "Bash(npm install:*)",
-      "Bash(npx cap:*)"
+      "Bash(npx cap:*)",
+      "Bash(open *)",
+      "Bash(chmod +x *)",
+      "Bash(love --version)"
     ]
   }
 }
