@@ -46,7 +46,7 @@ function State:_check_complete()
 end
 
 function State:_save()
-  self.hist:push(self.user_values, self.pencil_marks, self.n)
+  self.hist:push(self.user_values, self.pencil_marks, self.n * self.n)
 end
 
 function State:_restore(snap)
@@ -94,7 +94,7 @@ function State:new_game(n, difficulty)
   self.conflicts   = {}
   self.is_complete = false
   self.timer       = 0.0
-  self.hist:reset(self.user_values, self.pencil_marks, n)
+  self.hist:reset(self.user_values, self.pencil_marks, n * n)
 end
 
 function State:is_given(idx)

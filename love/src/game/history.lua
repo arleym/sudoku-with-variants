@@ -10,10 +10,11 @@ function History.new()
 end
 
 -- Deep-copy user_values and pencil_marks arrays.
-local function snapshot(user_values, pencil_marks, n)
+-- count = total cell count (n*n for 2D, n*n*n for 3D).
+local function snapshot(user_values, pencil_marks, count)
   local uv = {}
   local pm = {}
-  for i = 1, n * n do
+  for i = 1, count do
     uv[i] = user_values[i]
     -- pencil_marks[i] is a table { [v]=true } or nil
     if pencil_marks[i] then
@@ -25,11 +26,10 @@ local function snapshot(user_values, pencil_marks, n)
 end
 
 -- Push current state before a change.
-function History:push(user_values, pencil_marks, n)
-  -- Discard any redo entries above current position
+function History:push(user_values, pencil_marks, count)
   for i = self.pos + 1, #self.stack do self.stack[i] = nil end
   self.pos = self.pos + 1
-  self.stack[self.pos] = snapshot(user_values, pencil_marks, n)
+  self.stack[self.pos] = snapshot(user_values, pencil_marks, count)
 end
 
 -- Undo: return the previous snapshot, or nil if at beginning.
@@ -50,10 +50,10 @@ function History:can_undo() return self.pos > 1 end
 function History:can_redo() return self.pos < #self.stack end
 
 -- Clear all history (e.g. on new game).
-function History:reset(user_values, pencil_marks, n)
+function History:reset(user_values, pencil_marks, count)
   self.stack = {}
   self.pos   = 0
-  self:push(user_values, pencil_marks, n)
+  self:push(user_values, pencil_marks, count)
 end
 
 return History
