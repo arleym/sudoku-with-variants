@@ -1,302 +1,184 @@
--- Morrison Sudoku — Phase 0 scaffold
--- Renders the full 720×720 layout with a moveable cursor.
--- No puzzle logic yet; this verifies the visual target on device.
+-- Morrison Sudoku — main entry point
 
 local C      = require "src.const"
 local Colors = require "src.ui.colors"
+local Fonts  = require "src.ui.fonts"
+local State  = require "src.game.state"
+local Grid   = require "src.ui.grid"
+local TB     = require "src.ui.topbar"
+local Picker = require "src.ui.numberpicker"
 local G      = require "src.input.gamepad"
 
--- ── Fonts ────────────────────────────────────────────────────────────────────
--- Drop a TTF into assets/fonts/ and update the path below.
--- Falls back to LÖVE's built-in bitmap font if not found.
-local function load_font(path, size)
-  local ok, f = pcall(love.graphics.newFont, path, size)
-  return ok and f or love.graphics.newFont(size)
-end
-
-local FONT_PATH = "assets/fonts/JetBrainsMono-Regular.ttf"
-local font_sm   -- 11px  top bar labels
-local font_md   -- 16px  top bar wordmark / picker numbers
-local font_lg   -- 26px  grid cell values 9×9
-local font_xl   -- 14px  grid cell values 16×16
-
--- ── State ────────────────────────────────────────────────────────────────────
-local grid_size   = 9          -- active puzzle size (9 or 16)
-local cursor_row  = 4          -- 0-indexed
-local cursor_col  = 4
-local pick_cursor = 5          -- 1-indexed, currently selected number
-local pencil_mode = false
-local show_overlay = false     -- 3D cube panel open
-
-local layout  -- set in love.load via C.grid_layout(grid_size)
+local state        -- game state object
+local layout       -- grid layout table from C.grid_layout(n)
+local show_overlay = false  -- 3D cube panel visible
 
 -- ── Helpers ──────────────────────────────────────────────────────────────────
-local function set_color(c, a)
+
+local function sc(c, a)
   love.graphics.setColor(c[1], c[2], c[3], a or 1)
 end
 
-local function lerp_color(a, b, t)
-  return { a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t, a[3]+(b[3]-a[3])*t }
+local function start_game(n, difficulty)
+  state = State.new()
+  state:new_game(n, difficulty)
+  layout = C.grid_layout(n)
+  show_overlay = false
 end
 
--- ── Draw routines ─────────────────────────────────────────────────────────────
-
-local function draw_topbar()
-  local co = Colors.current
-
-  -- Background
-  set_color(co.topbar_bg)
-  love.graphics.rectangle("fill", 0, 0, C.W, C.TOPBAR_H)
-
-  -- Bottom border
-  set_color(co.border_box)
-  love.graphics.rectangle("fill", 0, C.TOPBAR_H - 1, C.W, 1)
-
-  -- Wordmark: "Morrison" accent + "SUDOKU" dim
-  love.graphics.setFont(font_md)
-  set_color(co.accent)
-  love.graphics.print("Morrison", 18, 15)
-
-  love.graphics.setFont(font_sm)
-  set_color(co.label_txt)
-  love.graphics.print("SUDOKU", 18 + font_md:getWidth("Morrison") + 7, 20)
-
-  -- Center: difficulty · size  (placeholder)
-  local center_txt = "Easy  ·  " .. grid_size .. "×" .. grid_size
-  local cw = font_sm:getWidth(center_txt)
-  set_color(co.topbar_text)
-  love.graphics.print(center_txt, math.floor((C.W - cw) / 2), 18)
-
-  -- Pencil indicator
-  if pencil_mode then
-    local ptxt = "✏ Pencil"
-    local pw = font_sm:getWidth(ptxt)
-    set_color(co.accent)
-    love.graphics.print(ptxt, math.floor((C.W - cw) / 2) - pw - 16, 18)
+local function confirm()
+  if not state.cursor then return end
+  if state.pencil_mode then
+    state:toggle_pencil_mark(state.pick_cursor)
+  else
+    state:set_value(state.pick_cursor)
   end
-
-  -- Right: timer + three icon circles (placeholder for ?, layers, ⚙)
-  set_color(co.topbar_text)
-  love.graphics.setFont(font_sm)
-  love.graphics.print("00:00", C.W - 160, 18)
-
-  local icon_y = math.floor(C.TOPBAR_H / 2)
-  local icon_r = 11
-  local icons  = { C.W - 108, C.W - 70, C.W - 32 }
-  for _, ix in ipairs(icons) do
-    set_color(co.label_dim)
-    love.graphics.circle("line", ix, icon_y, icon_r)
-  end
-  -- "?" label in first icon
-  set_color(co.label_txt)
-  love.graphics.setFont(font_sm)
-  love.graphics.print("?", icons[1] - 3, icon_y - 6)
-end
-
-local function draw_grid()
-  local co = Colors.current
-  local l  = layout
-  local n  = grid_size
-  local bx = l.box  -- box size (3 for 9×9)
-
-  -- Grid background
-  set_color(co.grid_bg)
-  love.graphics.rectangle("fill", l.x, l.y, l.px, l.px)
-
-  for row = 0, n - 1 do
-    for col = 0, n - 1 do
-      local cx = l.x + col * l.cell
-      local cy = l.y + row * l.cell
-
-      -- Cell background
-      local is_sel = (row == cursor_row and col == cursor_col)
-      local is_hl  = (row == cursor_row or col == cursor_col or
-                      (math.floor(row / bx) == math.floor(cursor_row / bx) and
-                       math.floor(col / bx) == math.floor(cursor_col / bx)))
-
-      if is_sel then
-        set_color(co.cell_sel_bg)
-      elseif is_hl then
-        set_color(co.cell_hl_bg)
-      else
-        set_color(co.cell_bg)
-      end
-      love.graphics.rectangle("fill", cx, cy, l.cell, l.cell)
-    end
-  end
-
-  -- Grid lines
-  for i = 0, n do
-    local is_box = (i % bx == 0)
-    local thick  = is_box and 2 or 1
-    set_color(is_box and co.border_box or co.border_cell)
-
-    -- vertical
-    love.graphics.rectangle("fill",
-      l.x + i * l.cell - math.floor(thick / 2), l.y, thick, l.px)
-    -- horizontal
-    love.graphics.rectangle("fill",
-      l.x, l.y + i * l.cell - math.floor(thick / 2), l.px, thick)
-  end
-
-  -- Outer border (draw last so it's clean)
-  set_color(co.border_box)
-  love.graphics.setLineWidth(2)
-  love.graphics.rectangle("line", l.x, l.y, l.px, l.px)
-  love.graphics.setLineWidth(1)
-end
-
-local function draw_picker()
-  local co   = Colors.current
-  local n    = grid_size
-  local sw   = C.picker_slot_w(n)
-  local sh   = 54
-  local py   = C.H - C.PICKER_H
-  local sy   = py + math.floor((C.PICKER_H - sh) / 2)
-  local font = (n > 9) and font_sm or font_md
-
-  -- Picker background
-  set_color(co.picker_bg)
-  love.graphics.rectangle("fill", 0, py, C.W, C.PICKER_H)
-
-  -- Top border
-  set_color(co.border_box)
-  love.graphics.rectangle("fill", 0, py, C.W, 1)
-
-  -- Total width of all slots
-  local total = (n + 1) * sw + n * 6
-  local sx0   = math.floor((C.W - total) / 2)
-
-  for i = 1, n do
-    local sx   = sx0 + (i - 1) * (sw + 6)
-    local is_cur = (i == pick_cursor)
-
-    set_color(is_cur and co.picker_cur or co.picker_cell)
-    love.graphics.rectangle("fill", sx, sy, sw, sh, 5)
-
-    set_color(is_cur and co.picker_cur_txt or co.picker_txt)
-    love.graphics.setFont(font)
-    local lbl = (n > 9 and i > 9) and string.char(55 + i) or tostring(i)
-    local lw  = font:getWidth(lbl)
-    local lh  = font:getHeight()
-    love.graphics.print(lbl, sx + math.floor((sw - lw) / 2),
-                              sy + math.floor((sh - lh) / 2))
-  end
-
-  -- Erase slot
-  local ex = sx0 + n * (sw + 6)
-  set_color(co.picker_cell)
-  love.graphics.rectangle("fill", ex, sy, sw, sh, 5)
-  set_color(co.label_txt)
-  love.graphics.setFont(font_sm)
-  local bw = font_sm:getWidth("⌫")
-  love.graphics.print("⌫", ex + math.floor((sw - bw) / 2),
-                           sy + math.floor((sh - font_sm:getHeight()) / 2))
-
-  -- Button hint labels
-  set_color(co.label_dim)
-  love.graphics.setFont(font_sm)
-  love.graphics.print("L1 ◀", sx0 - 38, sy + math.floor((sh - font_sm:getHeight()) / 2))
-  local rh_txt = "▶ R1"
-  love.graphics.print(rh_txt, sx0 + total + 4,
-                               sy + math.floor((sh - font_sm:getHeight()) / 2))
-end
-
-local function draw_overlay_hint()
-  if not show_overlay then return end
-  local co = Colors.current
-
-  -- Semi-transparent panel on right
-  local pw = 260
-  set_color({co.topbar_bg[1], co.topbar_bg[2], co.topbar_bg[3]}, 0.96)
-  love.graphics.rectangle("fill", C.W - pw, C.TOPBAR_H, pw, C.GRID_AREA_H)
-
-  set_color(co.border_box)
-  love.graphics.rectangle("fill", C.W - pw, C.TOPBAR_H, 1, C.GRID_AREA_H)
-
-  -- Placeholder text
-  love.graphics.setFont(font_sm)
-  set_color(co.label_txt)
-  love.graphics.printf("3D Cube Overview\n\n(Phase 4)", C.W - pw + 20,
-                        C.TOPBAR_H + 40, pw - 40, "center")
 end
 
 -- ── LÖVE callbacks ────────────────────────────────────────────────────────────
 
 function love.load()
-  love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
-
-  font_sm = load_font(FONT_PATH, 11)
-  font_md = load_font(FONT_PATH, 16)
-  font_lg = load_font(FONT_PATH, 26)
-  font_xl = load_font(FONT_PATH, 14)
-
-  layout = C.grid_layout(grid_size)
+  math.randomseed(os.time())
+  Fonts.init()
+  Colors.set("dark")
+  start_game(9, "medium")
 end
 
 function love.update(dt)
-  -- nothing yet; puzzle logic arrives in Phase 1
+  state:update(dt)
 end
 
 function love.draw()
   local co = Colors.current
-  set_color(co.bg)
+
+  -- Background
+  sc(co.bg)
   love.graphics.rectangle("fill", 0, 0, C.W, C.H)
 
-  draw_topbar()
-  draw_grid()
-  draw_picker()
-  draw_overlay_hint()
+  TB.draw(state, Fonts, Colors, show_overlay)
+  Grid.draw(state, layout, Fonts, Colors)
+  Picker.draw(state, Fonts, Colors)
 
-  -- Debug: gamepad connection status (remove before ship)
-  love.graphics.setFont(font_sm)
-  set_color(Colors.current.label_dim)
+  -- Overlay placeholder (Phase 4 will add isometric cube here)
+  if show_overlay then
+    local pw = 272
+    sc({co.topbar_bg[1], co.topbar_bg[2], co.topbar_bg[3]}, 0.97)
+    love.graphics.rectangle("fill", C.W - pw, C.TOPBAR_H, pw, C.GRID_AREA_H)
+    sc(co.border_box)
+    love.graphics.rectangle("fill", C.W - pw, C.TOPBAR_H, 1, C.GRID_AREA_H)
+    love.graphics.setFont(Fonts.sm)
+    sc(co.label_txt)
+    love.graphics.printf("3D Overview\n(Phase 4)", C.W - pw + 20,
+      C.TOPBAR_H + 40, pw - 40, "center")
+  end
+
+  -- Completion banner
+  if state.is_complete then
+    sc({0.1, 0.1, 0.1}, 0.85)
+    love.graphics.rectangle("fill", 0, C.H / 2 - 40, C.W, 80)
+    love.graphics.setFont(Fonts.md)
+    sc(Colors.current.accent)
+    local msg = "Puzzle Complete!"
+    local mw  = Fonts.md:getWidth(msg)
+    love.graphics.print(msg, math.floor((C.W - mw) / 2), C.H / 2 - 10)
+  end
+
+  -- Debug: gamepad name (remove before ship)
   local js = love.joystick.getJoysticks()
-  local pad_txt = #js > 0 and ("Gamepad: " .. js[1]:getName()) or "No gamepad detected"
-  love.graphics.print(pad_txt, 8, C.H - 14)
+  love.graphics.setFont(Fonts.sm)
+  sc(Colors.current.label_dim)
+  love.graphics.print(#js > 0 and js[1]:getName() or "no gamepad", 6, C.H - 14)
 end
 
 -- ── Input ─────────────────────────────────────────────────────────────────────
 
-local function move_cursor(dr, dc)
-  cursor_row = math.max(0, math.min(grid_size - 1, cursor_row + dr))
-  cursor_col = math.max(0, math.min(grid_size - 1, cursor_col + dc))
-end
-
-local function move_picker(d)
-  pick_cursor = ((pick_cursor - 1 + d) % grid_size) + 1
-end
-
--- Keyboard (for testing on desktop / Mac)
 function love.keypressed(key)
-  if key == "escape"  then love.event.quit()      end
-  if key == "up"      then move_cursor(-1,  0)    end
-  if key == "down"    then move_cursor( 1,  0)    end
-  if key == "left"    then move_cursor( 0, -1)    end
-  if key == "right"   then move_cursor( 0,  1)    end
-  if key == "["       then move_picker(-1)         end
-  if key == "]"       then move_picker( 1)         end
-  if key == "p"       then pencil_mode = not pencil_mode end
-  if key == "space"   then show_overlay = not show_overlay end
-  -- Size toggle for testing layout
-  if key == "tab" then
-    grid_size = (grid_size == 9) and 16 or 9
-    cursor_row = 0; cursor_col = 0; pick_cursor = 1
-    layout = C.grid_layout(grid_size)
+  if key == "escape" then love.event.quit() end
+
+  -- Cursor movement
+  if key == "up"    then state:move(-1,  0) end
+  if key == "down"  then state:move( 1,  0) end
+  if key == "left"  then state:move( 0, -1) end
+  if key == "right" then state:move( 0,  1) end
+
+  -- Picker navigation
+  if key == "[" then state:move_pick(-1) end
+  if key == "]" then state:move_pick( 1) end
+
+  -- Actions
+  if key == "return" or key == "space" then confirm() end
+  if key == "backspace" or key == "delete" then state:clear_cell() end
+  if key == "p" then state.pencil_mode = not state.pencil_mode end
+  if key == "tab" then show_overlay = not show_overlay end
+
+  -- Undo/redo
+  if key == "z" then state:undo() end
+  if key == "y" then state:redo() end
+
+  -- Direct number keys (1-9, also a-g for 10-16)
+  local num = tonumber(key)
+  if num and num >= 1 and num <= state.n then
+    state.pick_cursor = num
+    confirm()
+  end
+  if #key == 1 and key >= "a" and key <= "p" then
+    local v = key:byte() - string.byte("a") + 10
+    if v >= 10 and v <= state.n then
+      state.pick_cursor = v
+      confirm()
+    end
+  end
+
+  -- Dev shortcuts
+  if key == "f1" then start_game(9, "easy")   end
+  if key == "f2" then start_game(9, "medium") end
+  if key == "f3" then start_game(9, "hard")   end
+  if key == "f4" then start_game(16, "easy")  end
+  if key == "f5" then Colors.set("dark")      end
+  if key == "f6" then Colors.set("nord")      end
+  if key == "f7" then Colors.set("autumn")    end
+end
+
+function love.gamepadpressed(joystick, button)
+  if button == G.DPUP    then state:move(-1,  0) end
+  if button == G.DPDOWN  then state:move( 1,  0) end
+  if button == G.DPLEFT  then state:move( 0, -1) end
+  if button == G.DPRIGHT then state:move( 0,  1) end
+
+  if button == G.L1      then state:move_pick(-1) end
+  if button == G.R1      then state:move_pick( 1) end
+
+  if button == G.CONFIRM then confirm() end
+  if button == G.CLEAR   then state:clear_cell() end
+  if button == G.PENCIL  then state.pencil_mode = not state.pencil_mode end
+  if button == G.SELECT  then show_overlay = not show_overlay end
+
+  if button == G.L2      then state:undo() end
+  if button == G.R2      then state:redo() end
+
+  if button == G.START   then
+    -- TODO Phase 5: pause menu
   end
 end
 
--- Gamepad (Anbernic Cubexx on Knulli)
-function love.gamepadpressed(joystick, button)
-  print("gamepad:", button)  -- visible in Knulli logs during testing
+function love.mousepressed(x, y, button)
+  if button ~= 1 then return end
 
-  if button == G.DPUP    then move_cursor(-1,  0) end
-  if button == G.DPDOWN  then move_cursor( 1,  0) end
-  if button == G.DPLEFT  then move_cursor( 0, -1) end
-  if button == G.DPRIGHT then move_cursor( 0,  1) end
-  if button == G.L1      then move_picker(-1)      end
-  if button == G.R1      then move_picker( 1)      end
-  if button == G.PENCIL  then pencil_mode = not pencil_mode end
-  if button == G.SELECT  then show_overlay = not show_overlay end
-  if button == G.CLEAR   then love.event.quit() end  -- B = back/quit for now
+  -- Top bar icon clicks
+  local icon = TB.hit_test(x, y)
+  if icon == "layers" then show_overlay = not show_overlay; return end
+
+  -- Grid cell clicks (desktop testing)
+  if y > C.TOPBAR_H and y < C.H - C.PICKER_H then
+    local col = math.floor((x - layout.x) / layout.cell) + 1
+    local row = math.floor((y - layout.y) / layout.cell) + 1
+    if row >= 1 and row <= state.n and col >= 1 and col <= state.n then
+      local idx = (row - 1) * state.n + col
+      if state.cursor == idx then
+        state:select(nil)  -- deselect on second click
+      else
+        state:select(idx)
+      end
+    end
+  end
 end
