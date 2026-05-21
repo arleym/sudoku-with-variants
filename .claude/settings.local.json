@@ -15,7 +15,12 @@
       "Bash(npx cap:*)",
       "Bash(open *)",
       "Bash(chmod +x *)",
-      "Bash(love --version)"
+      "Bash(love --version)",
+      "Bash(love love/)",
+      "Bash(cp main.lua main.lua.bak)",
+      "Bash(cp _test_main.lua main.lua)",
+      "Bash(timeout 20 love .)",
+      "Bash(mv main.lua.bak main.lua)"
     ]
   }
 }
