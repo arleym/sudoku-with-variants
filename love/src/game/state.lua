@@ -122,14 +122,14 @@ end
 function State:set_value(value)
   local idx = self.cursor
   if not idx or self:is_given(idx) then return end
-  self:_save()
   if self.user_values[idx] == value then
-    self.user_values[idx] = nil  -- toggle off
+    self.user_values[idx] = nil
   else
     self.user_values[idx] = value
     self.pencil_marks[idx] = {}
     if value then self:_clean_pencil_around(idx, value) end
   end
+  self:_save()  -- save the resulting state so undo restores to it
   self:_update_conflicts()
   self:_check_complete()
 end
@@ -138,21 +138,21 @@ function State:toggle_pencil_mark(value)
   local idx = self.cursor
   if not idx or self:is_given(idx) then return end
   if self.user_values[idx] then return end
-  self:_save()
   if not self.pencil_marks[idx] then self.pencil_marks[idx] = {} end
   if self.pencil_marks[idx][value] then
     self.pencil_marks[idx][value] = nil
   else
     self.pencil_marks[idx][value] = true
   end
+  self:_save()
 end
 
 function State:clear_cell()
   local idx = self.cursor
   if not idx or self:is_given(idx) then return end
-  self:_save()
   self.user_values[idx]  = nil
   self.pencil_marks[idx] = {}
+  self:_save()
   self:_update_conflicts()
   self:_check_complete()
 end

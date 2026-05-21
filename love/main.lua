@@ -3,6 +3,8 @@
 local C       = require "src.const"
 local Colors  = require "src.ui.colors"
 local Fonts   = require "src.ui.fonts"
+local Sett    = require "src.settings"
+local Scenes  = require "src.scenes"
 local State   = require "src.game.state"
 local State3D = require "src.game.state3d"
 local Grid    = require "src.ui.grid"
@@ -12,10 +14,19 @@ local Picker  = require "src.ui.numberpicker"
 local Iso     = require "src.ui.isocube"
 local G       = require "src.input.gamepad"
 
+-- ── App state ────────────────────────────────────────────────────────────────
+
+local scene        = "menu"   -- "menu"|"game"|"pause"|"newgame"|"settings"|"complete"
+local prev_scene   = "menu"   -- where to return from settings
 local state        -- State or State3D
 local layout
 local is_3d        = false
 local show_overlay = false
+
+-- Track last game config for "Play Again"
+local last_mode = "2d"
+local last_n    = 9
+local last_diff = "medium"
 
 -- ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -23,24 +34,22 @@ local function sc(c, a)
   love.graphics.setColor(c[1], c[2], c[3], a or 1)
 end
 
-local function start_2d(n, diff)
-  is_3d         = false
+local function start_game(mode, n, diff)
+  last_mode     = mode
+  last_n        = n
+  last_diff     = diff
+  is_3d         = (mode == "3d")
   show_overlay  = false
-  state         = State.new()
+  if is_3d then
+    state = State3D.new()
+  else
+    state = State.new()
+  end
   state:new_game(n, diff)
-  layout        = C.grid_layout(n)
+  layout = C.grid_layout(n)
+  scene  = "game"
 end
 
-local function start_3d(n, diff)
-  is_3d         = true
-  show_overlay  = false
-  state         = State3D.new()
-  state:new_game(n, diff)
-  layout        = C.grid_layout(n)
-end
-
--- Returns the state object to pass to Grid.draw() and Picker.draw().
--- In 3D mode this is a 2D layer-view; in 2D mode it's the state directly.
 local function draw_state()
   return is_3d and state:layer_view() or state
 end
@@ -62,7 +71,25 @@ local function do_sidebar(id)
   elseif id == "layers"     then show_overlay = not show_overlay
   elseif id == "layer_up"   then if is_3d then state:change_layer(-1) end
   elseif id == "layer_down" then if is_3d then state:change_layer( 1) end
-  elseif id == "hint"       then  -- Phase 5
+  elseif id == "hint"       then  -- Phase 6 TODO
+  end
+end
+
+-- Handle an action table returned by a Scenes input function
+local function handle_action(action)
+  if not action then return end
+  if action.type == "scene" then
+    if action.name == "settings" then
+      prev_scene = scene  -- remember where we came from
+    end
+    scene = action.name
+  elseif action.type == "start_game" then
+    start_game(action.mode, action.n, action.diff)
+  elseif action.type == "back" then
+    scene = prev_scene
+  elseif action.type == "quit" then
+    Sett.save()
+    love.event.quit()
   end
 end
 
@@ -70,143 +97,163 @@ end
 
 function love.load()
   math.randomseed(os.time())
+  Sett.load()
   Fonts.init()
-  Colors.set("dark")
-  start_2d(9, "medium")
+  Colors.set(Sett.color_mode)
 end
 
 function love.update(dt)
-  state:update(dt)
+  if scene == "game" and state then
+    state:update(dt)
+    if state.is_complete and scene == "game" then
+      Scenes.set_complete(state.timer, last_diff, last_n, is_3d)
+      scene = "complete"
+    end
+  end
 end
 
 function love.draw()
   local co = Colors.current
-  local ds = draw_state()
 
-  sc(co.bg)
-  love.graphics.rectangle("fill", 0, 0, C.W, C.H)
-
-  -- Top bar uses raw state for timer/difficulty
-  TB.draw(state, Fonts, Colors)
-
-  -- Grid always shows active-layer view
-  Grid.draw(ds, layout, Fonts, Colors)
-
-  -- Sidebar (needs can_undo from the real state)
-  SB.draw(ds, Fonts, Colors, show_overlay, is_3d)
-
-  -- Picker
-  Picker.draw(ds, Fonts, Colors)
-
-  -- Isometric cube overlay (covers grid area when open)
-  if show_overlay and is_3d then
-    Iso.draw(state, Fonts, Colors)
-  elseif show_overlay then
-    -- 2D mode: small hint panel (future: puzzle stats)
-    sc(co.topbar_bg, 0.94)
-    love.graphics.rectangle("fill", 4, C.TOPBAR_H, C.SIDEBAR_X - 8, C.GRID_AREA_H)
-    sc(co.border_box)
-    love.graphics.rectangle("line", 4, C.TOPBAR_H, C.SIDEBAR_X - 8, C.GRID_AREA_H)
-    love.graphics.setFont(Fonts.sm)
-    sc(co.label_txt)
-    love.graphics.printf("Stats / Info\n(Phase 5)", 24, C.TOPBAR_H + 40, C.SIDEBAR_X - 40, "center")
+  -- Always draw game underneath modals (except main menu)
+  if scene ~= "menu" and state then
+    local ds = draw_state()
+    sc(co.bg)
+    love.graphics.rectangle("fill", 0, 0, C.W, C.H)
+    TB.draw(state, Fonts, Colors)
+    Grid.draw(ds, layout, Fonts, Colors)
+    SB.draw(state, Fonts, Colors, show_overlay, is_3d)
+    Picker.draw(ds, Fonts, Colors)
+    if show_overlay and is_3d then
+      Iso.draw(state, Fonts, Colors)
+    end
   end
 
-  -- Completion banner
-  if state.is_complete then
-    sc({0.05, 0.05, 0.05}, 0.88)
-    love.graphics.rectangle("fill", 0, C.H / 2 - 44, C.W, 88)
-    love.graphics.setFont(Fonts.md)
-    sc(co.accent)
-    local msg = "Puzzle complete!"
-    love.graphics.print(msg, math.floor((C.W - Fonts.md:getWidth(msg)) / 2), C.H / 2 - 10)
+  -- Scene overlays
+  if scene == "menu" then
+    Scenes.draw_menu(Fonts, Colors, false)
+  elseif scene == "newgame" then
+    Scenes.draw_newgame(Fonts, Colors)
+  elseif scene == "pause" then
+    Scenes.draw_pause(Fonts, Colors)
+  elseif scene == "settings" then
+    Scenes.draw_settings(Fonts, Colors)
+  elseif scene == "complete" then
+    Scenes.draw_complete(Fonts, Colors)
   end
 
-  -- Debug
+  -- Gamepad debug
   local js = love.joystick.getJoysticks()
   love.graphics.setFont(Fonts.sm)
   sc(co.label_dim)
   love.graphics.print(#js > 0 and js[1]:getName() or "no gamepad", 6, C.H - 13)
 end
 
--- ── Keyboard ──────────────────────────────────────────────────────────────────
+-- ── Unified input handler ─────────────────────────────────────────────────────
 
-function love.keypressed(key)
-  if key == "escape" then love.event.quit() end
-
-  if key == "up"        then state:move(-1,  0) end
-  if key == "down"      then state:move( 1,  0) end
-  if key == "left"      then state:move( 0, -1) end
-  if key == "right"     then state:move( 0,  1) end
-
-  -- Layer nav in 3D, picker nav in 2D
-  if is_3d then
-    if key == "[" then state:change_layer(-1) end
-    if key == "]" then state:change_layer( 1) end
-  else
-    if key == "[" then state:move_pick(-1) end
-    if key == "]" then state:move_pick( 1) end
-  end
-
-  if key == "return"    then place_number(state.pick_cursor) end
-  if key == "backspace" or key == "delete" then state:clear_cell() end
-  if key == "p"         then state.pencil_mode = not state.pencil_mode end
-  if key == "tab"       then show_overlay = not show_overlay end
-  if key == "z"         then state:undo() end
-  if key == "y"         then state:redo() end
-
-  local num = tonumber(key)
-  if num and num >= 1 and num <= state.n then place_number(num) end
-  if #key == 1 and key >= "a" and key <= "p" then
-    local v = key:byte() - string.byte("a") + 10
-    if v >= 10 and v <= state.n then place_number(v) end
-  end
-
-  -- Dev shortcuts
-  if key == "f1" then start_2d(9,  "easy")   end
-  if key == "f2" then start_2d(9,  "medium") end
-  if key == "f3" then start_2d(9,  "hard")   end
-  if key == "f4" then start_2d(16, "easy")   end
-  if key == "f8" then start_3d(4,  "easy")   end
-  if key == "f9" then start_3d(9,  "medium") end
-  if key == "f5" then Colors.set("dark")     end
-  if key == "f6" then Colors.set("nord")     end
-  if key == "f7" then Colors.set("autumn")   end
+-- Translate a raw key or gamepad button into a semantic action key
+local function semantic(raw)
+  local map = {
+    up="up", down="down", left="left", right="right",
+    dpup="up", dpdown="down", dpleft="left", dpright="right",
+    ["return"]="confirm", space="confirm", a="confirm",
+    escape="back", b="back",
+    p="start", start="start",
+  }
+  return map[raw] or raw
 end
 
--- ── Gamepad ───────────────────────────────────────────────────────────────────
+local function handle_input(raw)
+  local key = semantic(raw)
 
-function love.gamepadpressed(joystick, button)
-  if button == G.DPUP    then state:move(-1,  0) end
-  if button == G.DPDOWN  then state:move( 1,  0) end
-  if button == G.DPLEFT  then state:move( 0, -1) end
-  if button == G.DPRIGHT then state:move( 0,  1) end
+  if scene == "game" then
+    -- D-pad → grid cursor
+    if raw == "up"    or raw == "dpup"    then state:move(-1,  0) return end
+    if raw == "down"  or raw == "dpdown"  then state:move( 1,  0) return end
+    if raw == "left"  or raw == "dpleft"  then state:move( 0, -1) return end
+    if raw == "right" or raw == "dpright" then state:move( 0,  1) return end
 
-  if is_3d then
-    if button == G.L1 then state:change_layer(-1) end
-    if button == G.R1 then state:change_layer( 1) end
-  else
-    if button == G.L1 then state:move_pick(-1) end
-    if button == G.R1 then state:move_pick( 1) end
+    -- Shoulders: layer in 3D, picker in 2D
+    if raw == "leftshoulder"  or raw == "[" then
+      if is_3d then state:change_layer(-1) else state:move_pick(-1) end; return
+    end
+    if raw == "rightshoulder" or raw == "]" then
+      if is_3d then state:change_layer( 1) else state:move_pick( 1) end; return
+    end
+
+    if raw == "a" or raw == "return" then place_number(state.pick_cursor); return end
+    if raw == "b" or raw == "backspace" or raw == "delete" then state:clear_cell(); return end
+    if raw == "x" or raw == "p" then state.pencil_mode = not state.pencil_mode; return end
+    if raw == "back" or raw == "tab" then show_overlay = not show_overlay; return end
+    if raw == "lefttrigger"  or raw == "z" then state:undo(); return end
+    if raw == "righttrigger" or raw == "y" then state:redo(); return end
+    if raw == "start" or raw == "escape" then scene = "pause"; return end
+
+    -- Direct number keys
+    local num = tonumber(raw)
+    if num and num >= 1 and num <= state.n then place_number(num); return end
+    if #raw == 1 and raw >= "a" and raw <= "p" then
+      local v = raw:byte() - string.byte("a") + 10
+      if v >= 10 and v <= state.n then place_number(v) end
+      return
+    end
+
+  elseif scene == "menu" then
+    handle_action(Scenes.input_menu(key))
+
+  elseif scene == "newgame" then
+    handle_action(Scenes.input_newgame(key))
+
+  elseif scene == "pause" then
+    if raw == "start" then key = "back" end
+    handle_action(Scenes.input_pause(key))
+
+  elseif scene == "settings" then
+    handle_action(Scenes.input_settings(key, Colors, function(theme)
+      Colors.set(theme)
+    end))
+
+  elseif scene == "complete" then
+    handle_action(Scenes.input_complete(key, last_mode, last_n, last_diff))
   end
 
-  if button == G.CONFIRM then place_number(state.pick_cursor) end
-  if button == G.CLEAR   then state:clear_cell()              end
-  if button == G.PENCIL  then state.pencil_mode = not state.pencil_mode end
-  if button == G.SELECT  then show_overlay = not show_overlay end
-  if button == G.L2      then state:undo() end
-  if button == G.R2      then state:redo() end
-  if button == G.START   then  -- Phase 5
-  end
+  -- Dev shortcuts (F-keys, always active)
+  if raw == "f1" then start_game("2d", 9,  "easy")   end
+  if raw == "f2" then start_game("2d", 9,  "medium") end
+  if raw == "f3" then start_game("2d", 9,  "hard")   end
+  if raw == "f4" then start_game("2d", 16, "easy")   end
+  if raw == "f8" then start_game("3d", 4,  "easy")   end
+  if raw == "f9" then start_game("3d", 9,  "medium") end
 end
+
+function love.keypressed(key) handle_input(key) end
+
+function love.gamepadpressed(joystick, button) handle_input(button) end
 
 -- ── Mouse ─────────────────────────────────────────────────────────────────────
 
 function love.mousepressed(x, y, button)
   if button ~= 1 then return end
 
+  -- Non-game scenes: delegate to Scenes click handlers
+  if scene == "menu" then
+    handle_action(Scenes.click_menu(x, y)); return
+  elseif scene == "newgame" then
+    handle_action(Scenes.click_newgame(x, y)); return
+  elseif scene == "pause" then
+    handle_action(Scenes.click_pause(x, y)); return
+  elseif scene == "settings" then
+    handle_action(Scenes.click_settings(x, y, Colors, function(theme)
+      Colors.set(theme)
+    end)); return
+  elseif scene == "complete" then
+    handle_action(Scenes.click_complete(x, y, last_mode, last_n, last_diff)); return
+  end
+
   if y < C.TOPBAR_H then
-    if TB.settings_hit(x, y) then end  -- Phase 5
+    if TB.settings_hit(x, y) then
+      prev_scene = scene; scene = "settings"
+    end
     return
   end
 
@@ -220,7 +267,6 @@ function love.mousepressed(x, y, button)
     return
   end
 
-  -- Grid click (closes overlay if open)
   if x < C.SIDEBAR_X then
     if show_overlay then show_overlay = false; return end
     local col = math.floor((x - layout.x) / layout.cell) + 1

@@ -134,7 +134,6 @@ function State3D:set_value(value)
   local idx2d = self.cursor
   if not idx2d or self:is_given(idx2d) then return end
   local flat3 = self:flat3(idx2d)
-  self:_save()
   if self.user_values[flat3] == value then
     self.user_values[flat3] = nil
   else
@@ -142,6 +141,7 @@ function State3D:set_value(value)
     self.pencil_marks[flat3] = {}
     if value then self:_clean_pencil_around(flat3, value) end
   end
+  self:_save()
   self:_update_conflicts()
   self:_check_complete()
 end
@@ -151,25 +151,27 @@ function State3D:toggle_pencil_mark(value)
   if not idx2d or self:is_given(idx2d) then return end
   local flat3 = self:flat3(idx2d)
   if self.user_values[flat3] then return end
-  self:_save()
   self.pencil_marks[flat3] = self.pencil_marks[flat3] or {}
   if self.pencil_marks[flat3][value] then
     self.pencil_marks[flat3][value] = nil
   else
     self.pencil_marks[flat3][value] = true
   end
+  self:_save()
 end
 
 function State3D:clear_cell()
   local idx2d = self.cursor
   if not idx2d or self:is_given(idx2d) then return end
   local flat3 = self:flat3(idx2d)
-  self:_save()
   self.user_values[flat3]  = nil
   self.pencil_marks[flat3] = {}
+  self:_save()
   self:_update_conflicts()
   self:_check_complete()
 end
+
+function State3D:select(idx) self.cursor = idx end
 
 function State3D:undo()  self:_restore(self.hist:undo()) end
 function State3D:redo()  self:_restore(self.hist:redo()) end

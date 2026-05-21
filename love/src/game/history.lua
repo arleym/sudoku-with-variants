@@ -32,14 +32,20 @@ function History:push(user_values, pencil_marks, count)
   self.stack[self.pos] = snapshot(user_values, pencil_marks, count)
 end
 
--- Undo: return the previous snapshot, or nil if at beginning.
+-- Each push saves the resulting state after an action.
+-- stack[1]   = initial state (from reset)
+-- stack[2]   = state after first action
+-- stack[pos] = current state
+--
+-- Undo: step back one, restore stack[pos-1]
+-- Redo: step forward one, restore stack[pos+1]
+
 function History:undo()
   if self.pos <= 1 then return nil end
   self.pos = self.pos - 1
   return self.stack[self.pos]
 end
 
--- Redo: return the next snapshot, or nil if at end.
 function History:redo()
   if self.pos >= #self.stack then return nil end
   self.pos = self.pos + 1

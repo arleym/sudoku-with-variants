@@ -1,7 +1,8 @@
 -- Sudoku grid renderer.
 -- Grid.draw(state, layout, fonts, colors)
 
-local V = require "src.puzzle.validator"
+local V    = require "src.puzzle.validator"
+local Sett = require "src.settings"
 
 local Grid = {}
 
@@ -68,15 +69,17 @@ function Grid.draw(state, layout, fonts, colors)
       local cy  = L.y + (row - 1) * L.cell
 
       local is_sel = state.cursor == idx
-      local is_err = state.conflicts[idx] == true
+      local is_err = Sett.show_errors and state.conflicts[idx] == true
       local val    = state:value_at(idx)
 
       local is_hl, is_sn = false, false
       if sel_row and not is_sel then
         local in_box_r = sel_box_br and row >= sel_box_br and row < sel_box_br + bs
         local in_box_c = sel_box_bc and col >= sel_box_bc and col < sel_box_bc + bs
-        is_hl = (row == sel_row or col == sel_col or (in_box_r and in_box_c))
-        is_sn = (not is_hl) and sel_val ~= nil and val == sel_val
+        is_hl = Sett.highlight_related and
+                (row == sel_row or col == sel_col or (in_box_r and in_box_c))
+        is_sn = Sett.highlight_same_num and
+                (not is_hl) and sel_val ~= nil and val == sel_val
       end
 
       sc(cell_bg(co, is_sel, is_hl, is_sn, is_err))
