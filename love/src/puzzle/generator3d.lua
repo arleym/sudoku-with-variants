@@ -9,6 +9,7 @@
 local V3  = require "src.puzzle.validator3d"
 local C3  = require "src.puzzle.candidates3d"
 local Sol = require "src.puzzle.solver"  -- for 9×9 base layer
+local V   = require "src.puzzle.validator"  -- for box_size
 
 local G3 = {}
 
@@ -146,11 +147,107 @@ local function generate_9x9x9(difficulty)
   return { size = n, depth = n, difficulty = difficulty, cells = puzzle, solution = solution }
 end
 
+-- ── 16×16×16 ─────────────────────────────────────────────────────────────────
+-- Backtracking-solving a 16×16 base layer would hang, so we use the same
+-- instant pattern-based approach as the 2D 16×16 generator, then cyclic-shift
+-- across all 16 layers (same strategy as 9×9×9).
+
+local CLUES_16 = {
+  easy   = 2800,
+  medium = 2200,
+  hard   = 1700,
+  expert = 1300,
+}
+
+local function pattern_grid_16()
+  local n  = 16
+  local bs = V.box_size(n)   -- 4
+  local grid = {}
+  for row = 0, n - 1 do
+    for col = 0, n - 1 do
+      local v = (bs * (row % bs) + math.floor(row / bs) + col) % n + 1
+      grid[row * n + col + 1] = v
+    end
+  end
+  return grid
+end
+
+local function swap_rows_16(grid, n, from_rows, to_rows)
+  local temp = {}
+  for i, r in ipairs(from_rows) do
+    temp[i] = {}
+    for c = 1, n do temp[i][c] = grid[(r - 1) * n + c] end
+  end
+  for i, r in ipairs(to_rows) do
+    for c = 1, n do grid[(r - 1) * n + c] = temp[i][c] end
+  end
+end
+
+local function swap_cols_16(grid, n, from_cols, to_cols)
+  local temp = {}
+  for i, col in ipairs(from_cols) do
+    temp[i] = {}
+    for r = 1, n do temp[i][r] = grid[(r - 1) * n + col] end
+  end
+  for i, col in ipairs(to_cols) do
+    for r = 1, n do grid[(r - 1) * n + col] = temp[i][r] end
+  end
+end
+
+local function shuffle_pattern_16(grid, n)
+  local bs = V.box_size(n)   -- 4
+  for band = 0, bs - 1 do
+    local start = band * bs + 1
+    local rows = {}; for i = 0, bs - 1 do rows[i + 1] = start + i end
+    local s = {}; for i, v in ipairs(rows) do s[i] = v end; shuffle(s)
+    swap_rows_16(grid, n, rows, s)
+  end
+  for stack = 0, bs - 1 do
+    local start = stack * bs + 1
+    local cols = {}; for i = 0, bs - 1 do cols[i + 1] = start + i end
+    local s = {}; for i, v in ipairs(cols) do s[i] = v end; shuffle(s)
+    swap_cols_16(grid, n, cols, s)
+  end
+  local map = {}; for v = 1, n do map[v] = v end; shuffle(map)
+  for i = 1, n * n do grid[i] = map[grid[i]] end
+end
+
+local function generate_16x16x16(difficulty)
+  local n   = 16
+  local ls  = n * n
+
+  -- Build a shuffled valid 16×16 base layer (pattern-based, instant)
+  local base = pattern_grid_16()
+  shuffle_pattern_16(base, n)
+
+  -- Cyclic-shift across 16 layers
+  local solution = {}
+  for d = 0, n - 1 do
+    for i = 1, ls do
+      solution[d * ls + i] = ((base[i] - 1 + d) % n) + 1
+    end
+  end
+
+  local target    = CLUES_16[difficulty]
+  local to_remove = n * n * n - target
+  local puzzle    = {}
+  for i = 1, n * n * n do puzzle[i] = solution[i] end
+  local indices   = {}
+  for i = 1, n * n * n do indices[i] = i end
+  shuffle(indices)
+  for i = 1, math.min(to_remove, #indices) do
+    puzzle[indices[i]] = nil
+  end
+
+  return { size = n, depth = n, difficulty = difficulty, cells = puzzle, solution = solution }
+end
+
 -- ── Public API ────────────────────────────────────────────────────────────────
 
 function G3.generate(n, difficulty)
   difficulty = difficulty or "medium"
-  if n == 9 then return generate_9x9x9(difficulty) end
+  if n == 16 then return generate_16x16x16(difficulty) end
+  if n == 9  then return generate_9x9x9(difficulty) end
   return generate_4x4x4(difficulty)
 end
 

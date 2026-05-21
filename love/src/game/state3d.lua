@@ -174,6 +174,25 @@ function State3D:clear_cell()
   self:_check_complete()
 end
 
+-- Reset user progress on the current puzzle (same clues, fresh slate).
+function State3D:restart()
+  local n     = self.n
+  local total = n * n * n
+  self.user_values  = {}
+  self.pencil_marks = {}
+  for i = 1, total do
+    self.user_values[i]  = nil
+    self.pencil_marks[i] = {}
+  end
+  self.cursor       = nil
+  self.active_layer = 0
+  self.pencil_mode  = false
+  self.conflicts    = {}
+  self.is_complete  = false
+  self.timer        = 0.0
+  self.hist:reset(self.user_values, self.pencil_marks, total)
+end
+
 function State3D:select(idx) self.cursor = idx end
 
 function State3D:undo()  self:_restore(self.hist:undo()) end

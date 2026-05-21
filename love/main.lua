@@ -87,13 +87,31 @@ local function restore_game(sv)
     state.user_values[i]  = sv.user_values[i]
     state.pencil_marks[i] = {}
   end
-  state.timer = sv.timer
-  if is_3d then state.active_layer = sv.layer end
+  state.timer        = sv.timer
   state.cursor       = nil
   state.pencil_mode  = false
   state.pick_cursor  = 1
-  state.conflicts    = {}
   state.is_complete  = false
+  if is_3d then state.active_layer = sv.layer end
+
+  -- Seed history with the restored state so undo works from here
+  state.hist:reset(state.user_values, state.pencil_marks, total)
+
+  -- Recompute derived state
+  local V = is_3d and require("src.puzzle.validator3d") or require("src.puzzle.validator")
+  if is_3d then
+    state.conflicts = V.get_all_conflicts(
+      (function()
+        local m = {}
+        for i = 1, total do m[i] = state.puzzle.cells[i] or state.user_values[i] end
+        return m
+      end)(), n)
+  else
+    local merged = {}
+    for i = 1, total do merged[i] = state.puzzle.cells[i] or state.user_values[i] end
+    state.conflicts = V.get_all_conflicts(merged, n)
+  end
+  state.is_complete = false  -- don't auto-complete a restored game
 
   layout = C.grid_layout(n)
   scene  = "game"
@@ -131,6 +149,14 @@ local function handle_action(action)
     if action.name == "settings" then prev_scene = scene end
     if action.name == "menu" and state then Save.write(state, is_3d) end
     scene = action.name
+  elseif action.type == "restart_game" then
+    if state and state.puzzle then
+      state:restart()
+      Save.delete()
+      scene = "game"
+    else
+      request_game("2d", 9, "medium")
+    end
   elseif action.type == "load_save" then
     local sv = Save.read()
     if sv then restore_game(sv) else request_game("2d", 9, "medium") end
@@ -249,12 +275,17 @@ local function handle_input(raw)
     if raw == "left"  or raw == "dpleft"  then state:move( 0, -1) return end
     if raw == "right" or raw == "dpright" then state:move( 0,  1) return end
 
-    -- Shoulders: layer in 3D, picker in 2D
+    -- Shoulders: when the 3D cube panel is open, change layers.
+    -- Otherwise (including 2D mode), navigate the number picker.
+    -- This means: open the Layers panel → shoulder buttons flip through layers.
+    --             Close it → shoulder buttons pick a number.
     if raw == "leftshoulder"  or raw == "[" then
-      if is_3d then state:change_layer(-1) else state:move_pick(-1) end; return
+      if is_3d and show_overlay then state:change_layer(-1)
+      else state:move_pick(-1) end; return
     end
     if raw == "rightshoulder" or raw == "]" then
-      if is_3d then state:change_layer( 1) else state:move_pick( 1) end; return
+      if is_3d and show_overlay then state:change_layer( 1)
+      else state:move_pick( 1) end; return
     end
 
     if raw == "a" or raw == "return" then place_number(state.pick_cursor); return end

@@ -1,5 +1,6 @@
 -- 2D puzzle generator.
--- Supports sizes 9 (backtracking + uniqueness) and 16 (fast pattern-based).
+-- 4×4, 9×9: backtracking + unique-solution check.
+-- 16×16, 25×25: instant pattern-based generation.
 -- Returns a Puzzle table: { size, difficulty, cells, solution }
 -- cells: 1-indexed flat array, nil = blank, number = given clue.
 
@@ -27,6 +28,12 @@ local CLUE_TARGETS = {
     medium = {100, 130},
     hard   = { 80, 100},
     expert = { 60,  80},
+  },
+  [25] = {
+    easy   = {380, 450},
+    medium = {300, 380},
+    hard   = {220, 300},
+    expert = {150, 220},
   },
 }
 

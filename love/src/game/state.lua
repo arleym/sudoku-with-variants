@@ -160,6 +160,24 @@ function State:clear_cell()
   self:_check_complete()
 end
 
+-- Reset user progress on the current puzzle (same clues, fresh slate).
+function State:restart()
+  local n     = self.n
+  local total = n * n
+  self.user_values  = {}
+  self.pencil_marks = {}
+  for i = 1, total do
+    self.user_values[i]  = nil
+    self.pencil_marks[i] = {}
+  end
+  self.cursor      = nil
+  self.pencil_mode = false
+  self.conflicts   = {}
+  self.is_complete = false
+  self.timer       = 0.0
+  self.hist:reset(self.user_values, self.pencil_marks, total)
+end
+
 function State:undo()  self:_restore(self.hist:undo()) end
 function State:redo()  self:_restore(self.hist:redo()) end
 function State:can_undo() return self.hist:can_undo() end

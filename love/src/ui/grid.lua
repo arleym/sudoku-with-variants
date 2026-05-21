@@ -24,8 +24,9 @@ end
 
 local function draw_pencil(marks, cx, cy, cw, ch, n, font, co)
   if not marks or next(marks) == nil then return end
-  local bs   = V.box_size(n)  -- 3 for 9×9, 4 for 16×16
+  local bs   = V.box_size(n)
   local slot = cw / bs
+  if slot < 6 then return end  -- too small to render (25×25)
   love.graphics.setFont(font)
   sc(co.pencil)
   for v = 1, n do

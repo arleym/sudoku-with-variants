@@ -36,8 +36,9 @@ local function iso_params(n, depth, panel_w, panel_h)
   -- Layer step: spread layers so they're distinct but fit vertically
   local slab_h    = n * IY * 2   -- approx height of one slab
   local available = panel_h - slab_h - 40
-  local step_y    = math.max(14, math.floor(available / depth))
-  step_y          = math.min(step_y, depth <= 4 and 52 or 28)
+  local step_y    = math.max(10, math.floor(available / depth))
+  local max_step  = depth <= 4 and 52 or depth <= 9 and 28 or 16
+  step_y          = math.min(step_y, max_step)
 
   local total_h = 20 + depth * step_y + n * IY
   local ox = math.floor(panel_w / 2)

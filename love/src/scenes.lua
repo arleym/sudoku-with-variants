@@ -6,6 +6,17 @@ local C    = require "src.const"
 local Sett = require "src.settings"
 local Save = require "src.game.save"
 
+-- Lazy-loaded logo image
+local _logo
+local function get_logo()
+  if _logo == nil then
+    local ok, img = pcall(love.graphics.newImage,
+      "assets/images/morrison-crest-real.png")
+    _logo = ok and img or false   -- false = tried and failed, don't retry
+  end
+  return _logo or nil
+end
+
 local Sc = {}
 
 -- ── Drawing primitives ────────────────────────────────────────────────────────
@@ -151,7 +162,7 @@ local st = {
   newgame = {
     cursor = 1,   -- row: 1=mode 2=size 3=diff 4=start
     mode   = 1,   -- 1=2D 2=3D
-    size   = 1,   -- index into size list
+    size   = 2,   -- index into size list (default: 9×9 for 2D, 4×4×4 for 3D)
     diff   = 2,   -- 1=Easy 2=Medium 3=Hard 4=Expert
   },
 
@@ -173,10 +184,10 @@ local DONE_ITEMS  = { "Play Again", "New Game", "Menu" }
 local DIFF_OPTS  = { "Easy", "Medium", "Hard", "Expert" }
 local DIFF_VALS  = { "easy", "medium", "hard", "expert" }
 local MODE_OPTS  = { "2D", "3D" }
-local SIZE_2D    = { "9×9", "16×16" }
-local SIZE_2D_N  = { 9, 16 }
-local SIZE_3D    = { "4×4×4", "9×9×9" }
-local SIZE_3D_N  = { 4, 9 }
+local SIZE_2D    = { "4×4", "9×9", "16×16", "25×25" }
+local SIZE_2D_N  = { 4, 9, 16, 25 }
+local SIZE_3D    = { "4×4×4", "9×9×9", "16×16×16" }
+local SIZE_3D_N  = { 4, 9, 16 }
 
 local SETT_ROWS = {
   { key = "color_mode",        label = "Color Theme",    type = "cycle",  opts = {"dark","nord","autumn"} },
@@ -200,25 +211,47 @@ function Sc.draw_menu(fonts, colors, has_save)
   local items = menu_items(has_save)
   fullscreen_bg(co)
 
-  local cy_title = 150
+  -- Logo
+  local logo       = get_logo()
+  local logo_h     = 0
+  local LOGO_SIZE  = 160   -- display size in pixels
+  local LOGO_PAD   = 20    -- gap below logo before title
+
+  if logo then
+    local iw    = logo:getWidth()
+    local ih    = logo:getHeight()
+    local scale = LOGO_SIZE / math.max(iw, ih)
+    local dw    = iw * scale
+    local dh    = ih * scale
+    local lx    = math.floor((C.W - dw) / 2)
+    local ly    = 36
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(logo, lx, ly, 0, scale, scale)
+    logo_h = dh + LOGO_PAD
+  end
+
+  -- Title and subtitle, pushed down by logo
+  local title_y = 36 + logo_h
   love.graphics.setFont(fonts.md)
   sc(co.accent)
   local title = "Morrison Sudoku"
-  love.graphics.print(title, math.floor((C.W - fonts.md:getWidth(title)) / 2), cy_title)
+  love.graphics.print(title,
+    math.floor((C.W - fonts.md:getWidth(title)) / 2), title_y)
 
   love.graphics.setFont(fonts.sm)
   sc(co.label_txt)
   local sub = "PUZZLE COLLECTION"
-  love.graphics.print(sub, math.floor((C.W - fonts.sm:getWidth(sub)) / 2), cy_title + fonts.md:getHeight() + 6)
+  love.graphics.print(sub,
+    math.floor((C.W - fonts.sm:getWidth(sub)) / 2),
+    title_y + fonts.md:getHeight() + 5)
 
-  -- Clamp cursor to valid range
+  -- Clamp cursor
   if st.menu.cursor > #items then st.menu.cursor = 1 end
 
   local bx  = math.floor((C.W - BTN_W) / 2)
-  local by0 = 270
+  local by0 = title_y + fonts.md:getHeight() + fonts.sm:getHeight() + 30
   for i, lbl in ipairs(items) do
     local by = by0 + (i - 1) * (BTN_H + BTN_GAP)
-    -- Dim Continue if no save (shouldn't happen since we check has_save, but safety)
     list_btn(lbl, bx, by, st.menu.cursor == i, fonts.md, co)
   end
 
@@ -281,12 +314,16 @@ function Sc.input_newgame(key)
   elseif key == "down" or key == "dpdown" then
     ng.cursor = math.min(4, ng.cursor + 1)
   elseif key == "left" or key == "dpleft" then
-    if ng.cursor == 1 then ng.mode = ((ng.mode - 2) % 2) + 1; ng.size = 1
+    if ng.cursor == 1 then
+      ng.mode = ((ng.mode - 2) % 2) + 1
+      ng.size = ng.mode == 1 and 2 or 1   -- 2D defaults to 9×9, 3D to 4×4×4
     elseif ng.cursor == 2 then ng.size = ((ng.size - 2) % #sizes) + 1
     elseif ng.cursor == 3 then ng.diff = ((ng.diff - 2) % #DIFF_OPTS) + 1
     end
   elseif key == "right" or key == "dpright" then
-    if ng.cursor == 1 then ng.mode = (ng.mode % 2) + 1; ng.size = 1
+    if ng.cursor == 1 then
+      ng.mode = (ng.mode % 2) + 1
+      ng.size = ng.mode == 1 and 2 or 1
     elseif ng.cursor == 2 then ng.size = (ng.size % #sizes) + 1
     elseif ng.cursor == 3 then ng.diff = (ng.diff % #DIFF_OPTS) + 1
     end
@@ -342,9 +379,12 @@ end
 
 local COLOR_LABELS = { dark = "Dark", nord = "Nord", autumn = "Autumn" }
 
+-- Three bottom action buttons for settings
+local SETT_ACTIONS = { "Restart", "New Game", "Done" }
+
 function Sc.draw_settings(fonts, colors)
   local co  = colors.current
-  local mx, my, mw, mh = 100, 70, 520, 556
+  local mx, my, mw, mh = 100, 60, 520, 576
   modal_bg(mx, my, mw, mh, co)
   accent_text("Settings", my + 26, fonts.md, co)
 
@@ -379,37 +419,39 @@ function Sc.draw_settings(fonts, colors)
     end
   end
 
-  -- Done button
-  local bx  = mx + math.floor((mw - 200) / 2)
-  local by  = my + mh - BTN_H - 20
-  local bw  = 200
-  -- mini button
-  if st.sett.cursor == #SETT_ROWS + 1 then
-    sc(co.cell_sel_bg)
-    love.graphics.rectangle("fill", bx, by, bw, BTN_H, 8)
-    sc(co.accent)
-    love.graphics.setLineWidth(2)
-    love.graphics.rectangle("line", bx, by, bw, BTN_H, 8)
-    love.graphics.setLineWidth(1)
-    sc(co.cell_sel_txt)
-  else
-    sc(co.picker_cell)
-    love.graphics.rectangle("fill", bx, by, bw, BTN_H, 8)
-    sc(co.picker_border)
-    love.graphics.rectangle("line", bx, by, bw, BTN_H, 8)
-    sc(co.picker_txt)
+  -- Bottom action row: [Restart] [New Game] [Done]
+  local gap3   = 10
+  local bw3    = math.floor((row_w - gap3 * 2) / 3)
+  local by3    = my + mh - BTN_H - 18
+  for i, lbl in ipairs(SETT_ACTIONS) do
+    local bx3 = row_x + (i - 1) * (bw3 + gap3)
+    local sel  = (st.sett.cursor == #SETT_ROWS + i)
+    if sel then
+      sc(co.cell_sel_bg)
+      love.graphics.rectangle("fill", bx3, by3, bw3, BTN_H, 7)
+      sc(co.accent)
+      love.graphics.setLineWidth(2)
+      love.graphics.rectangle("line", bx3, by3, bw3, BTN_H, 7)
+      love.graphics.setLineWidth(1)
+      sc(co.cell_sel_txt)
+    else
+      sc(co.picker_cell)
+      love.graphics.rectangle("fill", bx3, by3, bw3, BTN_H, 7)
+      sc(co.picker_border)
+      love.graphics.rectangle("line", bx3, by3, bw3, BTN_H, 7)
+      sc(co.picker_txt)
+    end
+    love.graphics.setFont(fonts.sm)
+    love.graphics.print(lbl,
+      math.floor(bx3 + (bw3 - fonts.sm:getWidth(lbl)) / 2),
+      math.floor(by3 + (BTN_H - fonts.sm:getHeight()) / 2))
   end
-  love.graphics.setFont(fonts.md)
-  local dlbl = "Done"
-  love.graphics.print(dlbl,
-    math.floor(bx + (bw - fonts.md:getWidth(dlbl)) / 2),
-    math.floor(by + (BTN_H - fonts.md:getHeight()) / 2))
 
   hint_bar("↑↓   ◀▶ / A to change   B done", my + mh + 10, fonts.sm, co)
 end
 
 function Sc.input_settings(key, colors, on_theme_change)
-  local total = #SETT_ROWS + 1  -- rows + Done button
+  local total = #SETT_ROWS + #SETT_ACTIONS
   if key == "up"   or key == "dpup"   then st.sett.cursor = math.max(1, st.sett.cursor - 1) end
   if key == "down" or key == "dpdown" then st.sett.cursor = math.min(total, st.sett.cursor + 1) end
 
@@ -419,7 +461,6 @@ function Sc.input_settings(key, colors, on_theme_change)
     or key == "left"  or key == "dpleft"
     or key == "right" or key == "dpright" then
       if row.type == "cycle" then
-        -- cycle in direction
         local d = (key == "left" or key == "dpleft") and -1 or 1
         local n = #row.opts
         local cur = 1
@@ -435,14 +476,18 @@ function Sc.input_settings(key, colors, on_theme_change)
     end
   end
 
-  if st.sett.cursor == total then
+  -- Bottom action buttons
+  local action_idx = st.sett.cursor - #SETT_ROWS
+  if action_idx >= 1 and action_idx <= #SETT_ACTIONS then
     if key == "confirm" or key == "return" or key == "space" then
-      return { type = "back" }
+      local lbl = SETT_ACTIONS[action_idx]
+      if lbl == "Restart"  then return { type = "restart_game" } end
+      if lbl == "New Game" then return { type = "scene", name = "newgame" } end
+      if lbl == "Done"     then return { type = "back" } end
     end
   end
-  if key == "back" or key == "escape" then
-    return { type = "back" }
-  end
+
+  if key == "back" or key == "escape" then return { type = "back" } end
   return nil
 end
 
@@ -529,7 +574,13 @@ function Sc.click_menu(x, y)
   local has_save = Save.exists()
   local items    = menu_items(has_save)
   local bx       = math.floor((C.W - BTN_W) / 2)
-  local i        = list_hit(x, y, bx, 270, #items)
+
+  -- Compute by0 the same way draw_menu does
+  local logo_h = get_logo() and (160 + 20) or 0
+  local title_y = 36 + logo_h
+  local by0 = title_y + 15 + 11 + 30   -- approx md_h + sm_h + gap
+
+  local i = list_hit(x, y, bx, by0, #items)
   if i then
     st.menu.cursor = i
     return Sc.input_menu("confirm", has_save)
@@ -577,7 +628,7 @@ function Sc.click_pause(x, y)
 end
 
 function Sc.click_settings(x, y, colors, on_theme_change)
-  local mx, my, mw, mh = 100, 70, 520, 556
+  local mx, my, mw, mh = 100, 60, 520, 576
   local rx  = mx + 28
   local rw  = mw - 56
   local ry0 = my + 86
@@ -597,7 +648,6 @@ function Sc.click_settings(x, y, colors, on_theme_change)
         return
       end
     else
-      -- Clicking anywhere in the toggle row toggles it
       if x >= rx and x <= rx + rw and y >= ry and y <= ry + CHIP_H then
         st.sett.cursor = i
         Sett.toggle(row.key)
@@ -606,11 +656,20 @@ function Sc.click_settings(x, y, colors, on_theme_change)
     end
   end
 
-  -- Done button
-  local bx = mx + math.floor((mw - 200) / 2)
-  local by = my + mh - BTN_H - 20
-  if x >= bx and x <= bx + 200 and y >= by and y <= by + BTN_H then
-    return { type = "back" }
+  -- Bottom action buttons: [Restart] [New Game] [Done]
+  local gap3 = 10
+  local bw3  = math.floor((rw - gap3 * 2) / 3)
+  local by3  = my + mh - BTN_H - 18
+  if y >= by3 and y <= by3 + BTN_H then
+    for i, lbl in ipairs(SETT_ACTIONS) do
+      local bx3 = rx + (i - 1) * (bw3 + gap3)
+      if x >= bx3 and x <= bx3 + bw3 then
+        st.sett.cursor = #SETT_ROWS + i
+        if lbl == "Restart"  then return { type = "restart_game" } end
+        if lbl == "New Game" then return { type = "scene", name = "newgame" } end
+        if lbl == "Done"     then return { type = "back" } end
+      end
+    end
   end
 end
 
