@@ -7,6 +7,7 @@ local Sett    = require "src.settings"
 local Scenes  = require "src.scenes"
 local State   = require "src.game.state"
 local State3D = require "src.game.state3d"
+local Save    = require "src.game.save"
 local Grid    = require "src.ui.grid"
 local TB      = require "src.ui.topbar"
 local SB      = require "src.ui.sidebar"
@@ -16,12 +17,15 @@ local G       = require "src.input.gamepad"
 
 -- ── App state ────────────────────────────────────────────────────────────────
 
-local scene        = "menu"   -- "menu"|"game"|"pause"|"newgame"|"settings"|"complete"
-local prev_scene   = "menu"   -- where to return from settings
-local state        -- State or State3D
+local scene        = "menu"
+local prev_scene   = "menu"
+local state
 local layout
 local is_3d        = false
 local show_overlay = false
+
+-- Deferred generation: set these then set scene="loading" for one frame
+local pending_gen  = nil   -- { mode, n, diff }
 
 -- Track last game config for "Play Again"
 local last_mode = "2d"
@@ -34,18 +38,63 @@ local function sc(c, a)
   love.graphics.setColor(c[1], c[2], c[3], a or 1)
 end
 
+-- Queue a game to generate on the next frame (shows loading screen first).
+local function request_game(mode, n, diff)
+  last_mode    = mode
+  last_n       = n
+  last_diff    = diff
+  pending_gen  = { mode=mode, n=n, diff=diff }
+  scene        = "loading"
+end
+
 local function start_game(mode, n, diff)
-  last_mode     = mode
-  last_n        = n
-  last_diff     = diff
-  is_3d         = (mode == "3d")
-  show_overlay  = false
-  if is_3d then
-    state = State3D.new()
-  else
-    state = State.new()
-  end
+  last_mode    = mode
+  last_n       = n
+  last_diff    = diff
+  is_3d        = (mode == "3d")
+  show_overlay = false
+  if is_3d then state = State3D.new() else state = State.new() end
   state:new_game(n, diff)
+  layout = C.grid_layout(n)
+  Save.delete()   -- clear any existing save for this new game
+  scene  = "game"
+end
+
+-- Restore a previously saved game from disk.
+local function restore_game(sv)
+  is_3d        = (sv.mode == "3d")
+  show_overlay = false
+  last_mode    = sv.mode
+  last_n       = sv.n
+  last_diff    = sv.difficulty
+
+  if is_3d then state = State3D.new() else state = State.new() end
+  local n = sv.n
+
+  -- Reconstruct puzzle table
+  state.n = n
+  state.puzzle = {
+    size       = n,
+    depth      = sv.depth,
+    difficulty = sv.difficulty,
+    cells      = sv.puzzle_cells,
+    solution   = sv.solution,
+  }
+  state.user_values  = {}
+  state.pencil_marks = {}
+  local total = is_3d and (n*n*n) or (n*n)
+  for i = 1, total do
+    state.user_values[i]  = sv.user_values[i]
+    state.pencil_marks[i] = {}
+  end
+  state.timer = sv.timer
+  if is_3d then state.active_layer = sv.layer end
+  state.cursor       = nil
+  state.pencil_mode  = false
+  state.pick_cursor  = 1
+  state.conflicts    = {}
+  state.is_complete  = false
+
   layout = C.grid_layout(n)
   scene  = "game"
 end
@@ -79,15 +128,18 @@ end
 local function handle_action(action)
   if not action then return end
   if action.type == "scene" then
-    if action.name == "settings" then
-      prev_scene = scene  -- remember where we came from
-    end
+    if action.name == "settings" then prev_scene = scene end
+    if action.name == "menu" and state then Save.write(state, is_3d) end
     scene = action.name
+  elseif action.type == "load_save" then
+    local sv = Save.read()
+    if sv then restore_game(sv) else request_game("2d", 9, "medium") end
   elseif action.type == "start_game" then
-    start_game(action.mode, action.n, action.diff)
+    request_game(action.mode, action.n, action.diff)
   elseif action.type == "back" then
     scene = prev_scene
   elseif action.type == "quit" then
+    if state then Save.write(state, is_3d) end
     Sett.save()
     love.event.quit()
   end
@@ -100,12 +152,23 @@ function love.load()
   Sett.load()
   Fonts.init()
   Colors.set(Sett.color_mode)
+  -- If a save exists, show "Continue" as first option
+  -- (Scenes module reads Save.exists() to enable the button)
 end
 
 function love.update(dt)
+  -- Deferred puzzle generation (runs the frame after "loading" is drawn)
+  if pending_gen then
+    local cfg  = pending_gen
+    pending_gen = nil
+    start_game(cfg.mode, cfg.n, cfg.diff)
+    return
+  end
+
   if scene == "game" and state then
     state:update(dt)
     if state.is_complete and scene == "game" then
+      Save.delete()
       Scenes.set_complete(state.timer, last_diff, last_n, is_3d)
       scene = "complete"
     end
@@ -129,9 +192,23 @@ function love.draw()
     end
   end
 
+  -- Loading screen (one frame while generation runs)
+  if scene == "loading" then
+    local co = Colors.current
+    sc(co.bg)
+    love.graphics.rectangle("fill", 0, 0, C.W, C.H)
+    love.graphics.setFont(Fonts.md)
+    sc(co.accent)
+    local msg = "Generating puzzle..."
+    love.graphics.print(msg,
+      math.floor((C.W - Fonts.md:getWidth(msg)) / 2),
+      math.floor(C.H / 2 - Fonts.md:getHeight() / 2))
+    return
+  end
+
   -- Scene overlays
   if scene == "menu" then
-    Scenes.draw_menu(Fonts, Colors, false)
+    Scenes.draw_menu(Fonts, Colors, Save.exists())
   elseif scene == "newgame" then
     Scenes.draw_newgame(Fonts, Colors)
   elseif scene == "pause" then
@@ -142,11 +219,10 @@ function love.draw()
     Scenes.draw_complete(Fonts, Colors)
   end
 
-  -- Gamepad debug
-  local js = love.joystick.getJoysticks()
+  -- Version watermark
   love.graphics.setFont(Fonts.sm)
-  sc(co.label_dim)
-  love.graphics.print(#js > 0 and js[1]:getName() or "no gamepad", 6, C.H - 13)
+  sc(co.label_dim, 0.35)
+  love.graphics.print("v0.1", C.W - Fonts.sm:getWidth("v0.1") - 6, C.H - 13)
 end
 
 -- ── Unified input handler ─────────────────────────────────────────────────────
@@ -187,7 +263,11 @@ local function handle_input(raw)
     if raw == "back" or raw == "tab" then show_overlay = not show_overlay; return end
     if raw == "lefttrigger"  or raw == "z" then state:undo(); return end
     if raw == "righttrigger" or raw == "y" then state:redo(); return end
-    if raw == "start" or raw == "escape" then scene = "pause"; return end
+    if raw == "start" or raw == "escape" then
+      Save.write(state, is_3d)
+      scene = "pause"
+      return
+    end
 
     -- Direct number keys
     local num = tonumber(raw)
@@ -199,7 +279,7 @@ local function handle_input(raw)
     end
 
   elseif scene == "menu" then
-    handle_action(Scenes.input_menu(key))
+    handle_action(Scenes.input_menu(key, Save.exists()))
 
   elseif scene == "newgame" then
     handle_action(Scenes.input_newgame(key))

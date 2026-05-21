@@ -6,6 +6,7 @@
 local G3   = require "src.puzzle.generator3d"
 local V3   = require "src.puzzle.validator3d"
 local Hist = require "src.game.history"
+local Sett = require "src.settings"
 
 local State3D = {}
 State3D.__index = State3D
@@ -139,7 +140,9 @@ function State3D:set_value(value)
   else
     self.user_values[flat3] = value
     self.pencil_marks[flat3] = {}
-    if value then self:_clean_pencil_around(flat3, value) end
+    if value and Sett.pencil_auto_clean then
+      self:_clean_pencil_around(flat3, value)
+    end
   end
   self:_save()
   self:_update_conflicts()

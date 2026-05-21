@@ -4,6 +4,7 @@
 
 local C    = require "src.const"
 local Sett = require "src.settings"
+local Save = require "src.game.save"
 
 local Sc = {}
 
@@ -159,7 +160,13 @@ local st = {
   done   = { cursor = 1, elapsed = 0, diff = "", n = 0 },
 }
 
-local MENU_ITEMS  = { "New Game", "Settings", "Quit" }
+-- Menu items; Continue is inserted dynamically when a save exists.
+local MENU_ITEMS_NOSAVE = { "New Game", "Settings", "Quit" }
+local MENU_ITEMS_SAVE   = { "Continue", "New Game", "Settings", "Quit" }
+local function menu_items(has_save)
+  return has_save and MENU_ITEMS_SAVE or MENU_ITEMS_NOSAVE
+end
+local MENU_ITEMS = MENU_ITEMS_NOSAVE  -- compat alias (updated per-call)
 local PAUSE_ITEMS = { "Resume", "New Game", "Settings", "Quit" }
 local DONE_ITEMS  = { "Play Again", "New Game", "Menu" }
 
@@ -189,10 +196,11 @@ end
 -- ── Main Menu ─────────────────────────────────────────────────────────────────
 
 function Sc.draw_menu(fonts, colors, has_save)
-  local co = colors.current
+  local co    = colors.current
+  local items = menu_items(has_save)
   fullscreen_bg(co)
 
-  local cy_title = 160
+  local cy_title = 150
   love.graphics.setFont(fonts.md)
   sc(co.accent)
   local title = "Morrison Sudoku"
@@ -203,23 +211,29 @@ function Sc.draw_menu(fonts, colors, has_save)
   local sub = "PUZZLE COLLECTION"
   love.graphics.print(sub, math.floor((C.W - fonts.sm:getWidth(sub)) / 2), cy_title + fonts.md:getHeight() + 6)
 
-  local bx   = math.floor((C.W - BTN_W) / 2)
-  local by0  = 290
-  local items = MENU_ITEMS
+  -- Clamp cursor to valid range
+  if st.menu.cursor > #items then st.menu.cursor = 1 end
+
+  local bx  = math.floor((C.W - BTN_W) / 2)
+  local by0 = 270
   for i, lbl in ipairs(items) do
     local by = by0 + (i - 1) * (BTN_H + BTN_GAP)
+    -- Dim Continue if no save (shouldn't happen since we check has_save, but safety)
     list_btn(lbl, bx, by, st.menu.cursor == i, fonts.md, co)
   end
 
   hint_bar("D-pad ↑↓   A / Enter to select", C.H - 36, fonts.sm, co)
 end
 
-function Sc.input_menu(key)
-  local n = #MENU_ITEMS
+function Sc.input_menu(key, has_save)
+  has_save = has_save ~= false and Save.exists()
+  local items = menu_items(has_save)
+  local n     = #items
   if key == "up"   or key == "dpup"   then st.menu.cursor = ((st.menu.cursor - 2) % n) + 1 end
   if key == "down" or key == "dpdown" then st.menu.cursor = (st.menu.cursor % n) + 1 end
   if key == "confirm" or key == "return" or key == "space" then
-    local item = MENU_ITEMS[st.menu.cursor]
+    local item = items[st.menu.cursor]
+    if item == "Continue"  then return { type = "load_save" } end
     if item == "New Game"  then return { type = "scene", name = "newgame" } end
     if item == "Settings"  then return { type = "scene", name = "settings" } end
     if item == "Quit"      then return { type = "quit" } end
@@ -512,11 +526,13 @@ local function chip_hit(x, y, rx, ry, n_chips, row_w)
 end
 
 function Sc.click_menu(x, y)
-  local bx = math.floor((C.W - BTN_W) / 2)
-  local i  = list_hit(x, y, bx, 290, #MENU_ITEMS)
+  local has_save = Save.exists()
+  local items    = menu_items(has_save)
+  local bx       = math.floor((C.W - BTN_W) / 2)
+  local i        = list_hit(x, y, bx, 270, #items)
   if i then
     st.menu.cursor = i
-    return Sc.input_menu("confirm")
+    return Sc.input_menu("confirm", has_save)
   end
 end
 

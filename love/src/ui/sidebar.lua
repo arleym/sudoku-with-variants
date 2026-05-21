@@ -24,15 +24,16 @@ local BTN_H   = 60
 local BTN_GAP = 8
 local BTN_X   = C.SIDEBAR_X + 6
 
+-- hint = gamepad button label shown in corner of each sidebar button
 local function build_buttons(is_3d)
   local btns = {}
-  if is_3d then btns[#btns+1] = { id="layer_up",   label="Layer Up"   } end
-  btns[#btns+1] = { id="undo",        label="Undo"       }
-  btns[#btns+1] = { id="clear",       label="Clear"      }
-  btns[#btns+1] = { id="hint",        label="Hint"       }
-  btns[#btns+1] = { id="pencil",      label="Pencil"     }
-  btns[#btns+1] = { id="layers",      label="Layers"     }
-  if is_3d then btns[#btns+1] = { id="layer_down", label="Layer Down" } end
+  if is_3d then btns[#btns+1] = { id="layer_up",   label="Layer Up",   hint="L1"  } end
+  btns[#btns+1] = { id="undo",        label="Undo",       hint="L2"  }
+  btns[#btns+1] = { id="clear",       label="Clear",      hint="B"   }
+  btns[#btns+1] = { id="hint",        label="Hint",       hint="Y"   }
+  btns[#btns+1] = { id="pencil",      label="Pencil",     hint="X"   }
+  btns[#btns+1] = { id="layers",      label="Layers",     hint="Sel" }
+  if is_3d then btns[#btns+1] = { id="layer_down", label="Layer Down", hint="R1"  } end
   return btns
 end
 
@@ -127,6 +128,16 @@ function SB.draw(state, fonts, colors, show_overlay, is_3d)
     love.graphics.print(btn.label,
       math.floor(BTN_X + (BTN_W - lw) / 2),
       math.floor(ly))
+
+    -- Gamepad hint (bottom-right corner, very small)
+    if btn.hint then
+      love.graphics.setFont(fonts.sm)
+      sc(disabled and co.label_dim or co.label_dim, 0.55)
+      local hw = fonts.sm:getWidth(btn.hint)
+      love.graphics.print(btn.hint,
+        BTN_X + BTN_W - hw - 5,
+        by + BTN_H - fonts.sm:getHeight() - 3)
+    end
   end
 end
 

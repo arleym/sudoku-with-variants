@@ -4,6 +4,7 @@
 local Gen  = require "src.puzzle.generator"
 local V    = require "src.puzzle.validator"
 local Hist = require "src.game.history"
+local Sett = require "src.settings"
 
 local State = {}
 State.__index = State
@@ -127,7 +128,9 @@ function State:set_value(value)
   else
     self.user_values[idx] = value
     self.pencil_marks[idx] = {}
-    if value then self:_clean_pencil_around(idx, value) end
+    if value and Sett.pencil_auto_clean then
+      self:_clean_pencil_around(idx, value)
+    end
   end
   self:_save()  -- save the resulting state so undo restores to it
   self:_update_conflicts()
